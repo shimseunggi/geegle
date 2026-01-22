@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>지글 (Jiggle) - 조선의 검색 엔진</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            margin: 0; min-height: 100vh; background-color: #e0e0e0;
+            cursor: none; /* 기본 커서 숨김 */
+            display: flex; flex-direction: column; align-items: center;
+            font-family: 'Gungsuh', serif; /* 기본 폰트 */
+            overflow-x: hidden; /* 가로 스크롤 방지 */
+        }
+
+        /* =========================================
+           [수정] 로고 디자인 개선
+           ========================================= */
+        .google-style-logo {
+            display: flex;
+            align-items: flex-end; /* 하단 정렬로 변경 */
+            justify-content: center;
+            margin-top: 60px;
+            margin-bottom: 50px;
+            font-family: 'Poppins', sans-serif;
+            z-index: 10;
+            filter: drop-shadow(3px 3px 0px rgba(0,0,0,0.2)); /* 전체적인 만화 그림자 */
+        }
+
+        /* 1. 거대한 4색 'J' 아이콘 */
+        .logo-big-j {
+            font-size: 10rem;
+            font-weight: 900;
+            line-height: 0.8; /* 높이 조절 */
+            margin-right: 10px; /* 간격 조정 */
+            background: linear-gradient(
+                to bottom,
+                #EA4335 0%, #EA4335 30%,
+                #FBBC05 30%, #FBBC05 55%,
+                #34A853 55%, #34A853 80%,
+                #4285F4 80%, #4285F4 100%
+            );
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            /* 만화 같은 테두리 효과 */
+            -webkit-text-stroke: 2px black;
+        }
+
+        /* 2. 'JIGGLE' 텍스트 */
+        .logo-text {
+            font-size: 5rem;
+            font-weight: 900;
+            letter-spacing: -2px;
+            line-height: 1;
+            /* 만화 같은 테두리 효과 */
+            -webkit-text-stroke: 2px black;
+        }
+
+        /* 각 글자별 구글 색상 */
+        .c-blue { color: #4285F4; }
+        .c-red { color: #EA4335; }
+        .c-yellow { color: #FBBC05; }
+        .c-green { color: #34A853; }
+
+
+        /* =========================================
+           기존 스타일 유지 (인두, 화로, 레이아웃)
+           ========================================= */
+        .layout-row { display: flex; flex-direction: row; gap: 80px; align-items: flex-end; }
+        
+        /* 인두 커서 */
+        #iron-cursor {
+            position: fixed; pointer-events: none; width: 200px; height: 40px; z-index: 9999;
+            transform-origin: left center; transform: translate(0px, -20px) rotate(30deg);
+            display: flex; align-items: center; filter: drop-shadow(5px 5px 5px rgba(0,0,0,0.3));
+        }
+        .iron-head { width: 60px; height: 45px; background: #444; clip-path: polygon(0 50%, 100% 0, 100% 100%); transition: background 0.5s ease; }
+        .iron-rod { width: 100px; height: 8px; background: #333; margin-left: -1px; transition: background 0.5s ease; }
+        .iron-handle { width: 80px; height: 28px; background: #8b4513; border-radius: 5px 20px 20px 5px; box-shadow: inset 0 -5px 10px rgba(0,0,0,0.5); border-left: 5px solid #222; }
+        #iron-cursor.heated .iron-head { background: #ff2400; filter: drop-shadow(0 0 10px #ff4500); }
+        #iron-cursor.heated .iron-rod { background: linear-gradient(90deg, #ff2400 0%, #cc3300 30%, #333 70%); }
+
+        /* 숯불 화로 */
+        #fire-pit-container { position: relative; width: 300px; height: 300px; display: flex; justify-content: center; align-items: center; }
+        .earthen-pot { position: absolute; bottom: 0; width: 280px; height: 160px; background: radial-gradient(circle at 30% 30%, #5d4037, #3e2723); border-radius: 0 0 140px 140px; box-shadow: inset 10px -10px 20px rgba(0,0,0,0.6), 0 20px 30px rgba(0,0,0,0.4); z-index: 1; }
+        .pot-rim { position: absolute; top: 60px; width: 280px; height: 100px; background: #1a0500; border-radius: 50%; border: 15px solid #4e342e; box-sizing: border-box; z-index: 2; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+        .coal { position: absolute; background: #1a1a1a; box-shadow: inset 0 0 15px #8b0000; animation: glow 2s infinite alternate ease-in-out; }
+        .c1 { width: 60px; height: 50px; left: 40px; top: 20px; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; transform: rotate(10deg); }
+        .c2 { width: 70px; height: 60px; right: 50px; top: 15px; border-radius: 50% 20% 40% 60%; transform: rotate(-20deg); }
+        .c3 { width: 55px; height: 55px; left: 100px; top: 30px; border-radius: 40% 60% 30% 70%; z-index: 3; }
+        .c4 { width: 50px; height: 40px; left: 80px; bottom: 10px; border-radius: 20% 80% 30% 70%; background: #000; }
+        .c5 { width: 60px; height: 50px; right: 70px; bottom: 15px; border-radius: 60% 40% 70% 30%; }
+        @keyframes glow { 0% { background-color: #1a1a1a; box-shadow: inset 0 0 5px #500000; } 100% { background-color: #3e0a0a; box-shadow: inset 0 0 30px #ff3300; } }
+        .fire-glow { position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, rgba(200, 20, 0, 0.6) 0%, rgba(255,0,0,0) 70%); mix-blend-mode: screen; animation: flicker 0.15s infinite; pointer-events: none; }
+        @keyframes flicker { 0% { opacity: 0.7; transform: scale(1); } 50% { opacity: 0.9; transform: scale(1.02); } 100% { opacity: 0.8; transform: scale(0.98); } }
+
+        /* 용의자 컨테이너 */
+        #suspect {
+            width: 200px; height: 280px; background: #eee; border: 4px solid #333; margin-top: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            position: relative; /* 말풍선 위치 기준점 */
+            cursor: none;
+        }
+
+        /* =========================================
+           [수정] 만화 스타일 말풍선 (오른쪽 배치)
+           ========================================= */
+        #answer-bubble {
+            visibility: hidden;
+            position: absolute;
+            top: 20px; /* 죄인 상단 기준 위치 */
+            left: 220px; /* 죄인 오른쪽으로 이동 (죄인 너비 200px + 간격 20px) */
+            background: white;
+            padding: 20px;
+            border-radius: 30px; /* 더 둥글게 */
+            border: 4px solid black; /* 두꺼운 만화 테두리 */
+            width: 250px;
+            max-height: 150px;
+            overflow-y: auto;
+            /* 만화 같은 진한 그림자 */
+            box-shadow: 8px 8px 0px rgba(0,0,0,0.3);
+            font-size: 16px;
+            font-weight: bold;
+            text-align: left;
+            line-height: 1.5;
+            z-index: 100;
+        }
+
+        /* 말풍선 꼬리 (테두리 포함 구현) */
+        #answer-bubble::before, #answer-bubble::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            border-style: solid;
+        }
+
+        /* 검은색 테두리 꼬리 */
+        #answer-bubble::before {
+            left: -24px;
+            border-width: 15px 24px 15px 0;
+            border-color: transparent black transparent transparent;
+        }
+
+        /* 흰색 배경 꼬리 (테두리 위에 덮어씀) */
+        #answer-bubble::after {
+            left: -18px;
+            border-width: 12px 18px 12px 0;
+            border-color: transparent white transparent transparent;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="google-style-logo">
+        <div class="logo-big-j">J</div>
+        <div class="logo-text">
+            <span class="c-blue">J</span><span class="c-red">I</span><span class="c-yellow">G</span><span class="c-blue">G</span><span class="c-green">L</span><span class="c-red">E</span>
+        </div>
+    </div>
+
+    <div id="iron-cursor">
+        <div class="iron-head"></div>
+        <div class="iron-rod"></div>
+        <div class="iron-handle"></div>
+    </div>
+
+    <div class="layout-row">
+        <div id="fire-pit-container">
+            <div class="pot-rim">
+                <div class="fire-glow"></div>
+                <div class="coal c1"></div>
+                <div class="coal c2"></div>
+                <div class="coal c3"></div>
+                <div class="coal c4"></div>
+                <div class="coal c5"></div>
+            </div>
+            <div class="earthen-pot"></div>
+        </div>
+
+        <div id="suspect">
+            <div id="answer-bubble"></div>
+            <div style="font-size: 50px;">👤</div>
+            <h3>죄인 (랜덤 답변)</h3>
+        </div>
+    </div>
+
+    <div style="margin-top: 30px; margin-bottom: 50px;">
+        <input type="text" id="question-input" placeholder="무엇을 알고 싶으냐?" style="padding:15px; width:300px; font-family:'Gungsuh'; font-size:16px; border: 3px solid black; border-radius: 10px;">
+    </div>
+
+    <script>
+        const cursor = document.getElementById('iron-cursor');
+        const firePit = document.getElementById('fire-pit-container');
+        const suspect = document.getElementById('suspect');
+        const answerBubble = document.getElementById('answer-bubble');
+        const questionInput = document.getElementById('question-input');
+
+        let isHeated = false;
+
+        const randomAnswers = [
+            "으악! 소인은 정말 아무것도 모르오!",
+            "저잣거리의 김씨가 범인이오! 나는 아니오!",
+            "그건... 옆집 개똥이가 알 것이오!",
+            "아이고 나 죽네! 살려만 주시면 다 불겠소!",
+            "사실... 내가 곶감 하나 훔쳐 먹었소...",
+            "그것은 네이버... 아니, 구글 대감에게 물어보시오!",
+            "뜨겁소! 제발 그 인두 좀 치워주시오!",
+            "나는 억울하오! 하늘이 알고 땅이 아오!",
+            "배가 고파서 그랬소...",
+            "기억이 날 듯 말 듯 하오... 한 번만 더 지져주시오(?)"
+        ];
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.pageX + 'px';
+            cursor.style.top = e.pageY + 'px';
+        });
+
+        firePit.addEventListener('mouseenter', () => {
+            isHeated = true;
+            cursor.classList.add('heated');
+        });
+
+        suspect.addEventListener('click', () => {
+            const question = questionInput.value;
+
+            if (!isHeated) {
+                alert("인두가 식었소! 숯불에 지지고 오시오!");
+                return;
+            }
+            if (!question) {
+                alert("질문도 없이 지지면 어떡하오!");
+                questionInput.focus();
+                return;
+            }
+
+            // 고문 효과 (화면 흔들림)
+            document.body.style.transform = "translate(3px, 3px)";
+            setTimeout(() => document.body.style.transform = "translate(-3px, -3px)", 50);
+            setTimeout(() => document.body.style.transform = "translate(0, 0)", 100);
+
+            answerBubble.style.visibility = 'visible';
+            answerBubble.innerText = "으윽... 생각 좀 해보겠소...";
+
+            setTimeout(() => {
+                const pick = randomAnswers[Math.floor(Math.random() * randomAnswers.length)];
+                answerBubble.innerText = pick;
+            }, 500);
+
+            isHeated = false;
+            cursor.classList.remove('heated');
+        });
+    </script>
+</body>
+</html>
