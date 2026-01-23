@@ -201,46 +201,31 @@
             100% { opacity: 0; transform: translate(-50%, -180px) scale(2.5) rotate(20deg); background: rgba(255, 255, 255, 0); } 
         }
 
-        /* [수정] 화상 자국 스타일: 블러 처리된 삼각형, 빠른 퇴장 */
+        /* [수정] 화상 자국: 오차 보정됨, 블러 처리됨 */
         .burn-mark {
             position: absolute;
             width: 60px; height: 45px; /* 인두 크기 */
             clip-path: polygon(0 50%, 100% 0, 100% 100%); /* 삼각형 */
-            /* 초기 색상: 매우 뜨거운 중심부와 퍼지는 열기 */
             background: radial-gradient(circle at 30% 50%, rgba(255, 255, 200, 1) 0%, rgba(255, 100, 0, 0.9) 40%, rgba(100, 0, 0, 0.8) 80%);
-            transform: translate(-10px, -20px) rotate(30deg); /* 위치 및 각도 보정 */
+            
+            /* 인두 각도(30도) 유지 + 중심 위치 보정 */
+            /* transform-origin을 설정하여 회전 축을 맞춤 */
+            transform-origin: center;
+            transform: rotate(30deg);
+            
             pointer-events: none;
-            z-index: 9998;
-
-            /* [핵심] 초기 블러를 강하게 주어 자연스러운 열기로 표현 */
-            filter: blur(6px);
+            z-index: 9998; 
+            
+            filter: blur(6px); /* 블러 유지 */
             opacity: 1;
-            /* [핵심] 애니메이션 시간 단축 (0.8초) */
             animation: burnFadeFast 0.8s forwards ease-out;
-            /* 뜨거울 때는 밝게 빛나는 효과 */
             mix-blend-mode: hard-light;
         }
 
-        /* [수정] 빠르게 식으며 사라지는 애니메이션 */
         @keyframes burnFadeFast {
-            0% {
-                opacity: 1;
-                transform: translate(-10px, -20px) rotate(30deg) scale(1.1);
-                filter: blur(6px) brightness(2); /* 처음엔 매우 밝고 뜨거움 */
-            }
-            40% {
-                /* 순식간에 식어서 검붉은 그을음이 됨 */
-                background: #3d0000;
-                filter: blur(5px) brightness(0.7);
-                mix-blend-mode: multiply; /* 피부에 자연스럽게 어둡게 합성 */
-                opacity: 0.8;
-            }
-            100% {
-                /* 빠르게 사라짐 */
-                opacity: 0;
-                filter: blur(8px);
-                transform: translate(-10px, -20px) rotate(30deg) scale(1);
-            }
+            0% { opacity: 1; transform: rotate(30deg) scale(1.1); filter: blur(6px) brightness(2); }
+            40% { background: #3d0000; filter: blur(5px) brightness(0.7); mix-blend-mode: multiply; opacity: 0.9; }
+            100% { opacity: 0; filter: blur(8px); transform: rotate(30deg) scale(1); }
         }
     </style>
 </head>
@@ -393,14 +378,17 @@
         function createBurnMark(x, y) {
             const mark = document.createElement('div');
             mark.className = 'burn-mark';
-            mark.style.left = x + 'px';
-            mark.style.top = y + 'px';
+            
+            // [핵심] 인두 팁(Tip)의 시각적 위치와 자국 위치 일치시키기
+            // 인두가 CSS로 -20px 올라가 있으므로, 자국도 그만큼 위로 올려야 맞음
+            mark.style.left = (x - 20) + 'px'; // 너비의 절반만큼 이동하여 중앙 정렬 + 미세 보정
+            mark.style.top = (y - 20) + 'px';  // 인두의 시각적 높이 보정
             
             document.body.appendChild(mark);
             
             setTimeout(() => {
                 mark.remove();
-            }, 800); // [수정] 애니메이션 시간(0.8s)에 맞춰 제거 시간 단축
+            }, 800); 
         }
 
         person.addEventListener('click', (e) => {
@@ -416,7 +404,6 @@
                 return;
             }
 
-            // [판정] 신체 부위 클릭 시에만 작동
             const targetPart = e.target.closest('.head, .torso, .thigh');
             if (!targetPart) return;
 
@@ -430,6 +417,7 @@
             }
 
             createSmoke(clickX, clickY);
+            // [핵심] 위치 보정된 함수 호출
             createBurnMark(clickX, clickY);
 
             answerBubble.style.visibility = 'visible';
