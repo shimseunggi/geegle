@@ -129,21 +129,80 @@
 
         /* 다리 & 몸통 */
         .legs { position: absolute; bottom: 0; width: 110px; height: 110px; display: flex; justify-content: space-between; z-index: 5; }
-        .thigh { position: relative; width: 50px; height: 100px; background: #e8e8e8; border-radius: 10px 10px 20px 20px; box-shadow: inset 2px -5px 10px rgba(0,0,0,0.1); }
+        .thigh { position: relative; width: 50px; height: 100px; background: #dfcfa5; border-radius: 10px 10px 20px 20px; box-shadow: inset 2px -5px 10px rgba(0,0,0,0.1); }
         .socks { position: absolute; bottom: 15px; width: 100%; height: 20px; background: #fff; border-radius: 5px; }
         .shoes { position: absolute; bottom: -5px; width: 48px; height: 22px; background: #d2b48c; border-radius: 20px 20px 10px 10px; border-bottom: 3px solid #8b4513; left: 1px; z-index: 2; }
 
-        .torso { position: relative; width: 120px; height: 120px; background: #f0f0f0; border-radius: 30px 30px 10px 10px; bottom: 70px; z-index: 6; box-shadow: inset -5px 0 10px rgba(0,0,0,0.05); display: flex; justify-content: center; }
-        .collar-left { position: absolute; top: 10px; width: 65px; height: 55px; border-top: 10px solid #e0e0e0; transform: rotate(45deg); left: 10px; }
-        .collar-right { position: absolute; top: 10px; width: 65px; height: 55px; border-top: 10px solid #d0d0d0; transform: rotate(-45deg); right: 10px; }
+        /* 몸통: 상하의 삼베색 통일 */
+        .torso { 
+            position: relative; width: 120px; height: 120px; background: #dfcfa5; 
+            border-radius: 30px 30px 10px 10px; bottom: 70px; z-index: 6; 
+            box-shadow: inset -5px 0 10px rgba(0,0,0,0.1); 
+            display: flex; justify-content: center; overflow: hidden; /* 깃이 밖으로 나가는 것 방지 */
+        }
         
-        /* 밧줄 */
-        .rope { position: absolute; width: 100%; height: 100%; z-index: 7; pointer-events: none; }
-        .rope-strand { position: absolute; background: #8b5a2b; border-radius: 5px; }
-        .rs1 { width: 110px; height: 8px; top: 40px; left: 5px; transform: rotate(5deg); }
-        .rs2 { width: 110px; height: 8px; top: 60px; left: 5px; transform: rotate(-5deg); }
-        .rs3 { width: 8px; height: 60px; top: 30px; left: 30px; }
-        .rs4 { width: 8px; height: 60px; top: 30px; right: 30px; }
+        /* [수정] 깃(Collar) - 완벽한 Y자(우임) 구현 */
+        /* 왼쪽 깃 (안쪽) - 짧게 끝나야 X자가 안됨 */
+        .collar-inner { 
+            position: absolute; top: -20px; left: +12px; width: 80px; height: 25px; 
+            background: #d8c8a0; /* 옷보다 약간 진한 색 */
+            transform-origin: top left; transform: rotate(42deg); 
+            z-index: 1; border-bottom: 2px solid rgba(0,0,0,0.05);
+        }
+        /* 동정 (흰색 띠) - 왼쪽 */
+        .collar-inner::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: #fff;
+        }
+
+        /* 오른쪽 깃 (바깥쪽, 덮는 쪽) - 길게 내려와서 왼쪽을 덮음 */
+        .collar-outer { 
+            position: absolute; top: -20px; right: +12px; width: 90px; height: 25px; 
+            background: #e6d6b0; /* 약간 밝은 색 */
+            transform-origin: top right; transform: rotate(-42deg); 
+            z-index: 2; 
+            box-shadow: -2px 2px 3px rgba(0,0,0,0.1); /* 덮는 그림자 */
+        }
+        /* 동정 (흰색 띠) - 오른쪽 */
+        .collar-outer::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: #fff;
+        }
+        
+        /* [수정] 밧줄 (오라줄) - 조선시대 결박 방식 */
+        .rope-container { position: absolute; width: 100%; height: 100%; z-index: 10; pointer-events: none; top: 0; left: 0; }
+        
+        .rope-strand { 
+            position: absolute; 
+            background: repeating-linear-gradient(
+                45deg,
+                #8a3324, #8a3324 3px, /* 오라줄(붉은색) 느낌 */
+                #6e2619 3px, #6e2619 6px
+            );
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4); /* 입체감 */
+        }
+
+        /* 가슴 X자 결박 (강하게 조임) */
+        .rope-cross-1 { 
+            width: 130px; height: 10px; 
+            top: 45%; left: 50%; 
+            transform: translate(-50%, -50%) rotate(35deg); 
+        }
+        .rope-cross-2 { 
+            width: 130px; height: 10px; 
+            top: 45%; left: 50%; 
+            transform: translate(-50%, -50%) rotate(-35deg); 
+        }
+
+        /* 허리 가로 결박 */
+        .rope-waist {
+            width: 100%; height: 10px;
+            top: 75%; left: 0;
+            background: repeating-linear-gradient(
+                90deg,
+                #8a3324, #8a3324 3px, 
+                #6e2619 3px, #6e2619 6px
+            );
+        }
 
         /* 머리 */
         .head { 
@@ -201,15 +260,13 @@
             100% { opacity: 0; transform: translate(-50%, -180px) scale(2.5) rotate(20deg); background: rgba(255, 255, 255, 0); } 
         }
 
-        /* [수정] 화상 자국: 오차 보정됨, 블러 처리됨 */
+        /* 화상 자국 */
         .burn-mark {
             position: absolute;
             width: 60px; height: 45px; /* 인두 크기 */
             clip-path: polygon(0 50%, 100% 0, 100% 100%); /* 삼각형 */
             background: radial-gradient(circle at 30% 50%, rgba(255, 255, 200, 1) 0%, rgba(255, 100, 0, 0.9) 40%, rgba(100, 0, 0, 0.8) 80%);
             
-            /* 인두 각도(30도) 유지 + 중심 위치 보정 */
-            /* transform-origin을 설정하여 회전 축을 맞춤 */
             transform-origin: center;
             transform: rotate(30deg);
             
@@ -272,13 +329,13 @@
                         <div class="mouth" id="sinner-mouth"></div>
                     </div>
                     <div class="torso">
-                        <div class="collar-right"></div>
-                        <div class="collar-left"></div>
-                        <div class="rope">
-                            <div class="rope-strand rs1"></div>
-                            <div class="rope-strand rs2"></div>
-                            <div class="rope-strand rs3"></div>
-                            <div class="rope-strand rs4"></div>
+                        <div class="collar-inner"></div>
+                        <div class="collar-outer"></div>
+                        
+                        <div class="rope-container">
+                            <div class="rope-strand rope-cross-1"></div>
+                            <div class="rope-strand rope-cross-2"></div>
+                            <div class="rope-strand rope-waist"></div>
                         </div>
                     </div>
                     <div class="legs">
@@ -379,10 +436,8 @@
             const mark = document.createElement('div');
             mark.className = 'burn-mark';
             
-            // [핵심] 인두 팁(Tip)의 시각적 위치와 자국 위치 일치시키기
-            // 인두가 CSS로 -20px 올라가 있으므로, 자국도 그만큼 위로 올려야 맞음
-            mark.style.left = (x - 20) + 'px'; // 너비의 절반만큼 이동하여 중앙 정렬 + 미세 보정
-            mark.style.top = (y - 20) + 'px';  // 인두의 시각적 높이 보정
+            mark.style.left = (x - 20) + 'px'; 
+            mark.style.top = (y - 20) + 'px';  
             
             document.body.appendChild(mark);
             
@@ -417,7 +472,6 @@
             }
 
             createSmoke(clickX, clickY);
-            // [핵심] 위치 보정된 함수 호출
             createBurnMark(clickX, clickY);
 
             answerBubble.style.visibility = 'visible';
@@ -429,8 +483,8 @@
                 
                 setTimeout(() => { 
                     sinnerGroup.classList.remove('pain');
-                }, 300);
-            }, 100);
+                }, 500);
+            }, 300);
 
             isHeated = false;
             cursor.classList.remove('heated');
