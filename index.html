@@ -2,85 +2,127 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>기글 (Geegle) - 조선의 검색 엔진</title>
     <style>
         body {
             margin: 0; min-height: 100vh; background-color: #e0e0e0;
             cursor: none; /* 기본 커서 숨김 */
             display: flex; flex-direction: column; align-items: center;
-            font-family: 'Gungsuh', serif; /* 기본 폰트 궁서체 */
+            font-family: 'Gungsuh', serif;
             overflow-x: hidden;
+            touch-action: none; 
         }
 
-        /* 이미지 로고 컨테이너 */
+        /* 로고 스타일 */
         .geegle-logo-container {
             display: flex; justify-content: center; align-items: center;
-            margin-top: 60px; margin-bottom: 60px; z-index: 10;
-            filter: drop-shadow(5px 5px 2px rgba(0,0,0,0.2)); 
+            margin-top: 5vh; margin-bottom: 5vh; z-index: 10;
+            filter: drop-shadow(5px 5px 2px rgba(0,0,0,0.2));
+            width: 100%; 
         }
         .geegle-logo-img {
-            max-width: 90%; width: 600px; height: auto; display: block;
+            max-width: 80%; width: 600px; height: auto; display: block;
         }
 
-        /* 메인 레이아웃 */
-        .layout-row { display: flex; flex-direction: row; gap: 60px; align-items: flex-end; margin-bottom: 30px; }
-        
+        /* 레이아웃 */
+        .layout-row { 
+            display: flex; flex-direction: row; gap: 60px; 
+            align-items: flex-end; justify-content: center;
+            margin-bottom: 30px; flex-wrap: wrap; 
+        }
+        .item-wrapper {
+            display: flex; justify-content: center; align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        /* 반응형 미디어 쿼리 */
+        @media (max-width: 1000px) { .layout-row { gap: 40px; } }
+        @media (max-width: 768px) {
+            .layout-row { flex-direction: column; align-items: center; gap: 30px; }
+            .item-wrapper { transform: scale(0.85); }
+            #answer-bubble {
+                left: 50% !important; top: -110px !important; 
+                transform: translateX(-50%) !important; width: 220px !important; text-align: center !important;
+            }
+            #answer-bubble::before { border-color: black transparent transparent transparent !important; border-width: 24px 15px 0 15px !important; top: 100% !important; left: 50% !important; }
+            #answer-bubble::after { border-color: white transparent transparent transparent !important; border-width: 18px 12px 0 12px !important; top: 100% !important; left: 50% !important; }
+        }
+        @media (max-width: 400px) { .item-wrapper { transform: scale(0.7); margin: -20px 0; } }
+
         /* =========================================
-           [수정] 몸통과 테두리가 이어진 화로 디자인
+           화로 디자인
            ========================================= */
         #fire-pit-container {
             position: relative; width: 300px; height: 300px;
             display: flex; justify-content: center; align-items: center;
         }
-
-        /* 1. 사발 모양 몸통 (이전 형태로 복원 및 이음새 수정) */
         .earthen-pot {
-            position: absolute; bottom: 0;
-            width: 280px; height: 180px; /* 높이 미세 조정 */
-            /* 거친 질감 그라데이션 */
+            position: absolute; bottom: 0; width: 280px; height: 180px;
             background: radial-gradient(circle at 30% 30%, #5d4037, #3e2723);
-            /* 반원(사발) 모양 */
-            border-radius: 0 0 140px 140px;
-            /* [핵심] 상단을 어둡게 처리하여 테두리와 연결감 부여 */
-            border-top: 10px solid #2d1e19; 
-            box-shadow: inset 10px -10px 20px rgba(0,0,0,0.6), 0 20px 30px rgba(0,0,0,0.4);
-            z-index: 1;
+            border-radius: 0 0 140px 140px; border-top: 10px solid #2d1e19; 
+            box-shadow: inset 10px -10px 20px rgba(0,0,0,0.6), 0 20px 30px rgba(0,0,0,0.4); z-index: 1;
         }
-
-        /* 2. 입구 테두리 (몸통과 자연스럽게 연결) */
         .pot-rim {
-            position: absolute; top: 60px;
-            width: 280px; height: 100px;
-            background: #1a0500; /* 안쪽 깊은 어둠 */
-            border-radius: 50%;
-            /* 기본 테두리 색상 */
-            border: 15px solid #4e342e;
-            /* [핵심] 테두리 하단 색상을 몸통 상단과 일치시켜 경계 제거 */
-            border-bottom-color: #2d1e19; 
-            /* [핵심] 테두리 아래로 그림자를 내려 몸통과 블렌딩 */
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            box-sizing: border-box;
-            z-index: 2;
-            overflow: hidden; display: flex; justify-content: center; align-items: center;
+            position: absolute; top: 60px; width: 280px; height: 100px;
+            background: #1a0500; border-radius: 50%; border: 15px solid #4e342e;
+            border-bottom-color: #2d1e19; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            box-sizing: border-box; z-index: 2; overflow: hidden; display: flex; justify-content: center; align-items: center;
         }
 
-        /* (이하 숯, 불꽃, 인두, 죄인 스타일은 기존과 동일합니다) */
-        .coal { position: absolute; background: #1a1a1a; box-shadow: inset 0 0 15px #8b0000; animation: glow 2s infinite alternate ease-in-out; }
-        .c1 { width: 60px; height: 50px; left: 40px; top: 20px; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; transform: rotate(10deg); }
-        .c2 { width: 70px; height: 60px; right: 50px; top: 15px; border-radius: 50% 20% 40% 60%; transform: rotate(-20deg); }
-        .c3 { width: 55px; height: 55px; left: 100px; top: 30px; border-radius: 40% 60% 30% 70%; z-index: 3; }
-        .c4 { width: 50px; height: 40px; left: 80px; bottom: 10px; border-radius: 20% 80% 30% 70%; background: #000; }
-        .c5 { width: 60px; height: 50px; right: 70px; bottom: 15px; border-radius: 60% 40% 70% 30%; }
+        /* 숯덩이 스타일 (공통) */
+        .coal { 
+            position: absolute; 
+            background: #1a1a1a; 
+            box-shadow: inset 0 0 15px #8b0000; 
+            animation: glow 2s infinite alternate ease-in-out; 
+            border-radius: 40% 60% 50% 50% / 50% 40% 60% 50%; /* 덜 정형화된 모양 */
+        }
+        
+        /* [수정] 숯 25개 배치 (수북한 느낌) */
+        /* 1층 (바닥) */
+        .c1 { width: 60px; height: 50px; left: 20px; top: 20px; transform: rotate(10deg); }
+        .c2 { width: 70px; height: 60px; right: 20px; top: 15px; transform: rotate(-20deg); }
+        .c3 { width: 55px; height: 55px; left: 110px; top: 10px; z-index: 1; }
+        .c4 { width: 50px; height: 40px; left: 60px; bottom: 10px; background: #0a0a0a; }
+        .c5 { width: 60px; height: 50px; right: 60px; bottom: 15px; }
+        .c6 { width: 50px; height: 50px; left: 10px; top: 40px; transform: rotate(45deg); }
+        .c7 { width: 55px; height: 45px; right: 10px; top: 40px; transform: rotate(-15deg); }
+        
+        /* 2층 (중간) */
+        .c8 { width: 65px; height: 55px; left: 40px; top: 10px; transform: rotate(-10deg); z-index: 2; }
+        .c9 { width: 60px; height: 60px; right: 40px; top: 10px; transform: rotate(20deg); z-index: 2; }
+        .c10 { width: 50px; height: 50px; left: 90px; top: 5px; z-index: 2; background: #220000; }
+        .c11 { width: 55px; height: 45px; left: 140px; top: 15px; transform: rotate(30deg); z-index: 2; }
+        .c12 { width: 45px; height: 45px; left: 100px; top: 35px; z-index: 2; }
+        .c13 { width: 50px; height: 55px; right: 80px; top: 5px; transform: rotate(-40deg); z-index: 2; }
+
+        /* 3층 (상단 - 빈틈 채우기) */
+        .c14 { width: 40px; height: 40px; left: 70px; top: -5px; transform: rotate(15deg); z-index: 3; }
+        .c15 { width: 45px; height: 40px; right: 70px; top: -5px; transform: rotate(-15deg); z-index: 3; }
+        .c16 { width: 35px; height: 35px; left: 120px; top: 0px; z-index: 3; background: #330000; }
+        .c17 { width: 40px; height: 40px; left: 30px; top: 5px; z-index: 3; }
+        .c18 { width: 40px; height: 40px; right: 30px; top: 5px; z-index: 3; }
+        .c19 { width: 30px; height: 30px; left: 150px; top: 20px; z-index: 3; }
+        .c20 { width: 35px; height: 35px; right: 100px; top: 25px; z-index: 3; }
+
+        /* 4층 (디테일 조각) */
+        .c21 { width: 25px; height: 25px; left: 100px; top: -10px; background: #111; z-index: 4; }
+        .c22 { width: 30px; height: 25px; left: 50px; top: 0px; z-index: 4; }
+        .c23 { width: 25px; height: 30px; right: 50px; top: 0px; z-index: 4; }
+        .c24 { width: 20px; height: 20px; left: 130px; top: 10px; z-index: 4; }
+        .c25 { width: 20px; height: 20px; right: 130px; top: 10px; z-index: 4; }
+
         @keyframes glow { 0% { background-color: #1a1a1a; box-shadow: inset 0 0 5px #500000; } 100% { background-color: #3e0a0a; box-shadow: inset 0 0 30px #ff3300; } }
-        .fire-glow { position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, rgba(200, 20, 0, 0.6) 0%, rgba(255,0,0,0) 70%); mix-blend-mode: screen; animation: flicker 0.15s infinite; pointer-events: none; }
+        .fire-glow { position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, rgba(200, 20, 0, 0.6) 0%, rgba(255,0,0,0) 70%); mix-blend-mode: screen; animation: flicker 0.15s infinite; pointer-events: none; z-index: 5; }
         @keyframes flicker { 0% { opacity: 0.7; transform: scale(1); } 50% { opacity: 0.9; transform: scale(1.02); } 100% { opacity: 0.8; transform: scale(0.98); } }
 
-        /* 인두 커서 */
+        /* 인두 커서 (오차 해결됨) */
         #iron-cursor {
-            position: fixed; pointer-events: none; width: 200px; height: 40px; z-index: 9999;
+            position: absolute; pointer-events: none; width: 200px; height: 40px; z-index: 9999;
             transform-origin: left center; transform: translate(0px, -20px) rotate(30deg);
             display: flex; align-items: center; filter: drop-shadow(5px 5px 5px rgba(0,0,0,0.3));
+            left: 0; top: 0; visibility: hidden; 
         }
         .iron-head { width: 60px; height: 45px; background: #444; clip-path: polygon(0 50%, 100% 0, 100% 100%); transition: background 0.5s ease; }
         .iron-rod { width: 100px; height: 8px; background: #333; margin-left: -1px; transition: background 0.5s ease; }
@@ -90,7 +132,7 @@
 
         /* 용의자 및 UI */
         #suspect {
-            width: 200px; height: 280px; background: #eee; border: 4px solid #333; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; cursor: none;
+            width: 200px; height: 280px; background: #eee; border: 4px solid #333; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; cursor: pointer;
         }
         #answer-bubble {
             visibility: hidden; position: absolute; top: 20px; left: 220px; background: white; padding: 20px; border-radius: 30px; border: 4px solid black; width: 250px; max-height: 150px; overflow-y: auto; box-shadow: 8px 8px 0px rgba(0,0,0,0.3); font-size: 16px; font-weight: bold; text-align: left; line-height: 1.5; z-index: 100;
@@ -112,27 +154,31 @@
     </div>
 
     <div class="layout-row">
-        <div id="fire-pit-container">
-            <div class="pot-rim">
-                <div class="fire-glow"></div>
-                <div class="coal c1"></div>
-                <div class="coal c2"></div>
-                <div class="coal c3"></div>
-                <div class="coal c4"></div>
-                <div class="coal c5"></div>
+        <div class="item-wrapper">
+            <div id="fire-pit-container">
+                <div class="pot-rim">
+                    <div class="fire-glow"></div>
+                    <div class="coal c1"></div> <div class="coal c2"></div> <div class="coal c3"></div> <div class="coal c4"></div> <div class="coal c5"></div>
+                    <div class="coal c6"></div> <div class="coal c7"></div> <div class="coal c8"></div> <div class="coal c9"></div> <div class="coal c10"></div>
+                    <div class="coal c11"></div> <div class="coal c12"></div> <div class="coal c13"></div> <div class="coal c14"></div> <div class="coal c15"></div>
+                    <div class="coal c16"></div> <div class="coal c17"></div> <div class="coal c18"></div> <div class="coal c19"></div> <div class="coal c20"></div>
+                    <div class="coal c21"></div> <div class="coal c22"></div> <div class="coal c23"></div> <div class="coal c24"></div> <div class="coal c25"></div>
+                </div>
+                <div class="earthen-pot"></div>
             </div>
-            <div class="earthen-pot"></div>
         </div>
 
-        <div id="suspect">
-            <div id="answer-bubble"></div>
-            <div style="font-size: 50px;">👤</div>
-            <h3>죄인 (랜덤 답변)</h3>
+        <div class="item-wrapper">
+            <div id="suspect">
+                <div id="answer-bubble"></div>
+                <div style="font-size: 50px;">👤</div>
+                <h3>죄인 (랜덤 답변)</h3>
+            </div>
         </div>
     </div>
 
     <div style="margin-bottom: 50px;">
-        <input type="text" id="question-input" placeholder="무엇을 알고 싶으냐?" style="padding:15px; width:300px; font-family:'Gungsuh'; font-size:16px; border: 3px solid black; border-radius: 10px;">
+        <input type="text" id="question-input" placeholder="무엇을 알고 싶으냐?" style="padding:15px; width:300px; max-width: 80%; font-family:'Gungsuh'; font-size:16px; border: 3px solid black; border-radius: 10px;">
     </div>
 
     <script>
@@ -157,21 +203,49 @@
             "기억이 날 듯 말 듯 하오... 한 번만 더 지져주시오(?)"
         ];
 
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.pageX + 'px';
-            cursor.style.top = e.pageY + 'px';
-        });
+        function moveIron(x, y) {
+            if(cursor.style.visibility !== 'visible') {
+                cursor.style.visibility = 'visible';
+            }
+            cursor.style.left = (x - 10) + 'px'; 
+            cursor.style.top = (y - 10) + 'px';
+            checkHeatCollision(x, y);
+        }
 
-        firePit.addEventListener('mouseenter', () => {
-            isHeated = true;
-            cursor.classList.add('heated');
-        });
+        function checkHeatCollision(x, y) {
+            const rect = firePit.getBoundingClientRect();
+            const absoluteTop = rect.top + window.scrollY;
+            const absoluteLeft = rect.left + window.scrollX;
+            const absoluteBottom = absoluteTop + rect.height;
+            const absoluteRight = absoluteLeft + rect.width;
 
-        suspect.addEventListener('click', () => {
+            if (x >= absoluteLeft && x <= absoluteRight && y >= absoluteTop && y <= absoluteBottom) {
+                if (!isHeated) {
+                    isHeated = true;
+                    cursor.classList.add('heated');
+                }
+            }
+        }
+
+        document.addEventListener('mousemove', (e) => { moveIron(e.pageX, e.pageY); });
+        firePit.addEventListener('mouseenter', () => { isHeated = true; cursor.classList.add('heated'); });
+
+        document.addEventListener('touchmove', (e) => {
+            if(e.target.closest('#answer-bubble') || e.target.closest('#question-input')) return;
+            const touch = e.touches[0];
+            moveIron(touch.pageX, touch.pageY);
+        }, { passive: false });
+
+        document.addEventListener('touchstart', (e) => {
+            if(e.target.closest('#question-input')) return;
+            const touch = e.touches[0];
+            moveIron(touch.pageX, touch.pageY);
+        }, { passive: false });
+
+        suspect.addEventListener('click', (e) => {
             const question = questionInput.value;
-
             if (!isHeated) {
-                alert("인두가 식었소! 숯불에 지지고 오시오!");
+                alert("인두가 식었소! 화로에 대고 달구시오!");
                 return;
             }
             if (!question) {
@@ -179,19 +253,15 @@
                 questionInput.focus();
                 return;
             }
-
             document.body.style.transform = "translate(3px, 3px)";
             setTimeout(() => document.body.style.transform = "translate(-3px, -3px)", 50);
             setTimeout(() => document.body.style.transform = "translate(0, 0)", 100);
-
             answerBubble.style.visibility = 'visible';
             answerBubble.innerText = "으윽... 검색 중이오...";
-
             setTimeout(() => {
                 const pick = randomAnswers[Math.floor(Math.random() * randomAnswers.length)];
                 answerBubble.innerText = pick;
             }, 500);
-
             isHeated = false;
             cursor.classList.remove('heated');
         });
