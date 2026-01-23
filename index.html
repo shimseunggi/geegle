@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>기글 (Geegle) - 조선의 검색 엔진</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@900&display=swap" rel="stylesheet">
-    
     <style>
         body {
             margin: 0; min-height: 100vh; background-color: #e0e0e0;
@@ -17,38 +13,72 @@
             overflow-x: hidden;
         }
 
-        /* =========================================
-           [수정] 이미지 로고 스타일
-           ========================================= */
+        /* 이미지 로고 컨테이너 */
         .geegle-logo-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 60px;  /* 상단 여백 */
-            margin-bottom: 50px; /* 하단 여백 */
-            z-index: 10;
-            /* 만화적 그림자 효과 (이미지 전체에 적용됨) */
+            display: flex; justify-content: center; align-items: center;
+            margin-top: 60px; margin-bottom: 60px; z-index: 10;
             filter: drop-shadow(5px 5px 2px rgba(0,0,0,0.2)); 
         }
-
-        /* 새로 추가된 로고 이미지 스타일 */
         .geegle-logo-img {
-            /* 반응형 크기 조절 */
-            max-width: 90%;  /* 화면이 좁을 때는 꽉 차게 */
-            width: 600px;    /* PC에서는 너무 크지 않게 최대 폭 설정 (원하는 대로 조절 가능) */
-            height: auto;    /* 비율 유지 */
-            display: block;  /* 이미지 하단 공백 제거용 */
+            max-width: 90%; width: 600px; height: auto; display: block;
         }
 
-        /* --- [삭제됨] 기존 CSS 로고 관련 스타일들은 모두 지웠습니다 --- */
-        /* .logo-big-icon, .logo-text, .c-1-G 등등... */
-
-
-        /* =========================================
-           기존 스타일 유지 (인두, 화로, 레이아웃)
-           ========================================= */
-        .layout-row { display: flex; flex-direction: row; gap: 80px; align-items: flex-end; }
+        /* 메인 레이아웃 */
+        .layout-row { display: flex; flex-direction: row; gap: 60px; align-items: flex-end; margin-bottom: 30px; }
         
+        /* =========================================
+           [수정] 더 자연스러운 숯불 화로 디자인
+           ========================================= */
+        #fire-pit-container {
+            position: relative; width: 360px; height: 260px; /* 전체 크기 조절 */
+            display: flex; justify-content: center; align-items: flex-end;
+        }
+
+        /* 1. 투박한 질그릇 몸통 (새 디자인) */
+        .earthen-pot {
+            position: absolute; bottom: 0;
+            width: 340px; height: 180px;
+            /* 거칠고 어두운 흙 질감 그라데이션 */
+            background: radial-gradient(ellipse at 40% 30%, #6d4c41, #4e342e, #2d1e19);
+            /* 둥글넓적한 항아리 모양 */
+            border-radius: 40% 40% 55% 55% / 60% 60% 40% 40%;
+            /* 묵직한 입체감과 그림자 */
+            box-shadow:
+                inset 0 20px 30px rgba(0,0,0,0.4), /* 안쪽 상단 그림자 */
+                inset 0 -15px 25px rgba(0,0,0,0.6), /* 안쪽 하단 그림자 */
+                0 25px 35px rgba(0,0,0,0.5), /* 바닥 큰 그림자 */
+                0 5px 10px rgba(0,0,0,0.3); /* 바닥 접촉면 */
+            z-index: 1;
+        }
+
+        /* 2. 깊이감 있는 화로 입구 (새 디자인) */
+        .pot-rim {
+            position: absolute; top: 25px; /* 위치 조정 */
+            width: 280px; height: 100px; /* 크기 조정 */
+            background: #1a0500; /* 깊은 어둠 */
+            border-radius: 50%;
+            /* 테두리를 두껍고 입체적으로 */
+            border: 20px solid #3e2723;
+            border-top-color: #5d4037; /* 윗부분 빛 반사 */
+            border-bottom-color: #2d1e19; /* 아랫부분 그림자 */
+            box-sizing: border-box;
+            z-index: 2;
+            /* 안쪽으로 깊이 파인 느낌 */
+            box-shadow: inset 0 15px 30px rgba(0,0,0,0.9);
+            overflow: hidden; display: flex; justify-content: center; align-items: center;
+        }
+
+        /* (이하 숯, 불꽃, 인두, 죄인 스타일은 기존과 동일합니다) */
+        .coal { position: absolute; background: #1a1a1a; box-shadow: inset 0 0 15px #8b0000; animation: glow 2s infinite alternate ease-in-out; }
+        .c1 { width: 60px; height: 50px; left: 50px; top: 30px; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; transform: rotate(10deg); }
+        .c2 { width: 70px; height: 60px; right: 60px; top: 25px; border-radius: 50% 20% 40% 60%; transform: rotate(-20deg); }
+        .c3 { width: 55px; height: 55px; left: 110px; top: 40px; border-radius: 40% 60% 30% 70%; z-index: 3; }
+        .c4 { width: 50px; height: 40px; left: 90px; bottom: 20px; border-radius: 20% 80% 30% 70%; background: #000; }
+        .c5 { width: 60px; height: 50px; right: 80px; bottom: 25px; border-radius: 60% 40% 70% 30%; }
+        @keyframes glow { 0% { background-color: #1a1a1a; box-shadow: inset 0 0 5px #500000; } 100% { background-color: #3e0a0a; box-shadow: inset 0 0 30px #ff3300; } }
+        .fire-glow { position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, rgba(200, 20, 0, 0.6) 0%, rgba(255,0,0,0) 70%); mix-blend-mode: screen; animation: flicker 0.15s infinite; pointer-events: none; }
+        @keyframes flicker { 0% { opacity: 0.7; transform: scale(1); } 50% { opacity: 0.9; transform: scale(1.02); } 100% { opacity: 0.8; transform: scale(0.98); } }
+
         /* 인두 커서 */
         #iron-cursor {
             position: fixed; pointer-events: none; width: 200px; height: 40px; z-index: 9999;
@@ -61,55 +91,15 @@
         #iron-cursor.heated .iron-head { background: #ff2400; filter: drop-shadow(0 0 10px #ff4500); }
         #iron-cursor.heated .iron-rod { background: linear-gradient(90deg, #ff2400 0%, #cc3300 30%, #333 70%); }
 
-        /* 숯불 화로 */
-        #fire-pit-container { position: relative; width: 300px; height: 300px; display: flex; justify-content: center; align-items: center; }
-        .earthen-pot { position: absolute; bottom: 0; width: 280px; height: 160px; background: radial-gradient(circle at 30% 30%, #5d4037, #3e2723); border-radius: 0 0 140px 140px; box-shadow: inset 10px -10px 20px rgba(0,0,0,0.6), 0 20px 30px rgba(0,0,0,0.4); z-index: 1; }
-        .pot-rim { position: absolute; top: 60px; width: 280px; height: 100px; background: #1a0500; border-radius: 50%; border: 15px solid #4e342e; box-sizing: border-box; z-index: 2; overflow: hidden; display: flex; justify-content: center; align-items: center; }
-        .coal { position: absolute; background: #1a1a1a; box-shadow: inset 0 0 15px #8b0000; animation: glow 2s infinite alternate ease-in-out; }
-        .c1 { width: 60px; height: 50px; left: 40px; top: 20px; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; transform: rotate(10deg); }
-        .c2 { width: 70px; height: 60px; right: 50px; top: 15px; border-radius: 50% 20% 40% 60%; transform: rotate(-20deg); }
-        .c3 { width: 55px; height: 55px; left: 100px; top: 30px; border-radius: 40% 60% 30% 70%; z-index: 3; }
-        .c4 { width: 50px; height: 40px; left: 80px; bottom: 10px; border-radius: 20% 80% 30% 70%; background: #000; }
-        .c5 { width: 60px; height: 50px; right: 70px; bottom: 15px; border-radius: 60% 40% 70% 30%; }
-        @keyframes glow { 0% { background-color: #1a1a1a; box-shadow: inset 0 0 5px #500000; } 100% { background-color: #3e0a0a; box-shadow: inset 0 0 30px #ff3300; } }
-        .fire-glow { position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, rgba(200, 20, 0, 0.6) 0%, rgba(255,0,0,0) 70%); mix-blend-mode: screen; animation: flicker 0.15s infinite; pointer-events: none; }
-        @keyframes flicker { 0% { opacity: 0.7; transform: scale(1); } 50% { opacity: 0.9; transform: scale(1.02); } 100% { opacity: 0.8; transform: scale(0.98); } }
-
-        /* 용의자 컨테이너 */
+        /* 용의자 및 UI */
         #suspect {
-            width: 200px; height: 280px; background: #eee; border: 4px solid #333; margin-top: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center;
-            position: relative; cursor: none;
+            width: 200px; height: 280px; background: #eee; border: 4px solid #333; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; cursor: none;
         }
-
-        /* 만화 스타일 말풍선 (오른쪽 배치) */
         #answer-bubble {
-            visibility: hidden;
-            position: absolute;
-            top: 20px;
-            left: 220px; /* 오른쪽으로 배치 */
-            background: white;
-            padding: 20px;
-            border-radius: 30px;
-            border: 4px solid black;
-            width: 250px;
-            max-height: 150px;
-            overflow-y: auto;
-            box-shadow: 8px 8px 0px rgba(0,0,0,0.3);
-            font-size: 16px;
-            font-weight: bold;
-            text-align: left;
-            line-height: 1.5;
-            z-index: 100;
+            visibility: hidden; position: absolute; top: 20px; left: 220px; background: white; padding: 20px; border-radius: 30px; border: 4px solid black; width: 250px; max-height: 150px; overflow-y: auto; box-shadow: 8px 8px 0px rgba(0,0,0,0.3); font-size: 16px; font-weight: bold; text-align: left; line-height: 1.5; z-index: 100;
         }
-        /* 말풍선 꼬리 */
-        #answer-bubble::before {
-            content: ''; position: absolute; top: 50%; left: -24px; transform: translateY(-50%);
-            border-style: solid; border-width: 15px 24px 15px 0; border-color: transparent black transparent transparent;
-        }
-        #answer-bubble::after {
-            content: ''; position: absolute; top: 50%; left: -18px; transform: translateY(-50%);
-            border-style: solid; border-width: 12px 18px 12px 0; border-color: transparent white transparent transparent;
-        }
+        #answer-bubble::before { content: ''; position: absolute; top: 50%; left: -24px; transform: translateY(-50%); border-style: solid; border-width: 15px 24px 15px 0; border-color: transparent black transparent transparent; }
+        #answer-bubble::after { content: ''; position: absolute; top: 50%; left: -18px; transform: translateY(-50%); border-style: solid; border-width: 12px 18px 12px 0; border-color: transparent white transparent transparent; }
     </style>
 </head>
 <body>
@@ -144,7 +134,7 @@
         </div>
     </div>
 
-    <div style="margin-top: 30px; margin-bottom: 50px;">
+    <div style="margin-bottom: 50px;">
         <input type="text" id="question-input" placeholder="무엇을 알고 싶으냐?" style="padding:15px; width:300px; font-family:'Gungsuh'; font-size:16px; border: 3px solid black; border-radius: 10px;">
     </div>
 
@@ -157,7 +147,6 @@
 
         let isHeated = false;
 
-        // Geegle 스타일의 랜덤 답변 리스트
         const randomAnswers = [
             "으악! 기글(Geegle) 검색 결과가 없소!",
             "저잣거리의 김씨가 범인이오! 나는 아니오!",
@@ -194,7 +183,6 @@
                 return;
             }
 
-            // 고문 효과 (화면 흔들림)
             document.body.style.transform = "translate(3px, 3px)";
             setTimeout(() => document.body.style.transform = "translate(-3px, -3px)", 50);
             setTimeout(() => document.body.style.transform = "translate(0, 0)", 100);
