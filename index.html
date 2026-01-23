@@ -10,15 +10,179 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <style>
+        :root {
+            /* 백주 (Light) */
+            --bg-color: #f0f0f0;
+            --text-color: #333;
+            --input-bg: #fff;
+            --input-border: #333;
+            --bubble-bg: #fff;
+            --bubble-text: #000;
+            
+            /* 상소문 변수 */
+            --paper-bg: #e8dcb5; 
+            --paper-text: #3e2723; 
+            --paper-border: #5d4037; 
+            
+            --logo-filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.1));
+            --overlay-color: rgba(0, 0, 0, 0.6);
+        }
+
+        /* 야밤 (Dark) */
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --input-bg: #333;
+            --input-border: #555;
+            --bubble-bg: #2a2a2a;
+            --bubble-text: #fff;
+            --paper-bg: #cbb995; 
+            --logo-filter: invert(1) drop-shadow(2px 2px 2px rgba(255,255,255,0.1));
+            --overlay-color: rgba(0, 0, 0, 0.8);
+        }
+
         body {
-            margin: 0; min-height: 100vh; background-color: #f0f0f0;
-            cursor: none; 
+            margin: 0; min-height: 100vh; 
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            cursor: none; /* 기본 상태: 커서 없음 (인두 사용) */
             display: flex; flex-direction: column; align-items: center;
             font-family: 'Gungsuh', serif;
             overflow-x: hidden;
             touch-action: pan-y; 
             -webkit-overflow-scrolling: touch;
+            transition: background-color 0.5s ease, color 0.5s ease;
         }
+
+        /* [추가] 설정창이 열렸을 때 (settings-active 클래스) */
+        body.settings-active {
+            cursor: default !important; /* 시스템 기본 화살표 커서 부활 */
+        }
+        /* 설정창 열렸을 때 인두 숨기기 */
+        body.settings-active #iron-cursor {
+            display: none !important;
+        }
+        /* 설정창 내부 버튼들엔 손가락 커서 */
+        body.settings-active button {
+            cursor: pointer;
+        }
+
+        /* 설정 버튼 */
+        .settings-btn-container {
+            position: absolute; top: 20px; right: 20px; z-index: 100;
+        }
+        #btn-open-settings {
+            background: transparent; border: 2px solid var(--text-color);
+            color: var(--text-color); font-family: 'Gungsuh';
+            padding: 8px 15px; border-radius: 20px; cursor: pointer; /* 여기서는 일단 pointer라고 쓰지만 body cursor: none에 묻힘 */
+            font-size: 16px; font-weight: bold; transition: all 0.3s;
+            display: flex; align-items: center; gap: 5px;
+        }
+        #btn-open-settings:hover {
+            background: var(--text-color); color: var(--bg-color);
+        }
+        /* 마우스 오버 시 일시적으로 시스템 커서 보여주기 (편의성) */
+        #btn-open-settings:hover {
+            cursor: pointer;
+        }
+
+        /* --- 상소문 모달창 --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--overlay-color);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 10000; opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s;
+        }
+        .modal-overlay.open {
+            opacity: 1; visibility: visible;
+        }
+
+        .modal-scroll {
+            width: 340px; max-width: 90%;
+            display: flex; flex-direction: column; align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        /* 나무 봉 */
+        .scroll-roller-top, .scroll-roller-bottom {
+            height: 28px; width: 100%;
+            background: repeating-linear-gradient(90deg, #3e2723, #3e2723 2px, #5d4037 2px, #5d4037 10px);
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.6);
+            position: relative; z-index: 10;
+        }
+        .scroll-roller-top::before, .scroll-roller-top::after,
+        .scroll-roller-bottom::before, .scroll-roller-bottom::after {
+            content: ''; position: absolute; width: 18px; height: 38px;
+            background: #281813; border-radius: 6px; top: -5px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+        }
+        .scroll-roller-top::before, .scroll-roller-bottom::before { left: -12px; }
+        .scroll-roller-top::after, .scroll-roller-bottom::after { right: -12px; }
+
+        /* 종이 본문 */
+        .modal-content {
+            background-color: var(--paper-bg);
+            color: var(--paper-text);
+            width: 90%;
+            
+            /* 닫힌 상태 */
+            max-height: 0; padding-top: 0; padding-bottom: 0;
+            overflow: hidden; opacity: 0;
+
+            background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 2px, transparent 2px, transparent 4px);
+            box-shadow: inset 0 0 20px rgba(139, 69, 19, 0.2);
+            text-align: center;
+            position: relative; z-index: 1;
+            
+            transition: max-height 0.8s cubic-bezier(0.4, 0, 0.2, 1), 
+                        padding 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+                        opacity 0.3s ease;
+        }
+
+        /* 열린 상태 */
+        .modal-overlay.open .modal-content {
+            max-height: 600px; padding-top: 30px; padding-bottom: 30px;
+            opacity: 1; transition-delay: 0.1s; 
+        }
+
+        .modal-title {
+            font-size: 26px; font-weight: bold; margin-bottom: 15px;
+            border-bottom: 2px solid var(--paper-text); padding-bottom: 10px;
+            letter-spacing: 5px;
+        }
+        .modal-desc {
+            font-size: 15px; margin-bottom: 25px; line-height: 1.6;
+            font-weight: bold; color: #5d4037;
+        }
+
+        .setting-section { margin-bottom: 25px; }
+        .setting-label {
+            font-size: 16px; margin-bottom: 12px; display: block; font-weight: bold;
+        }
+
+        .theme-options { display: flex; justify-content: center; gap: 10px; }
+        .theme-btn {
+            background: transparent; border: 2px solid var(--paper-text);
+            color: var(--paper-text); font-family: 'Gungsuh';
+            padding: 8px 14px; border-radius: 8px; cursor: pointer;
+            font-size: 15px; font-weight: bold; transition: all 0.2s;
+        }
+        .theme-btn:hover { background: rgba(0,0,0,0.05); }
+        .theme-btn.active {
+            border-color: #c62828; color: #c62828;
+            box-shadow: inset 0 0 5px rgba(198, 40, 40, 0.2);
+        }
+
+        #btn-close-settings {
+            background: transparent; color: var(--paper-text);
+            border: none; border-top: 1px dashed var(--paper-border);
+            padding-top: 15px; width: 100%;
+            font-family: 'Gungsuh'; font-size: 16px; font-weight: bold;
+            cursor: pointer; opacity: 0.7; transition: opacity 0.3s;
+        }
+        #btn-close-settings:hover { opacity: 1; }
 
         /* 로고 */
         .geegle-logo-container {
@@ -28,7 +192,9 @@
             width: 100%; 
         }
         .geegle-logo-img {
-            max-width: 80%; width: 400px; height: auto; display: block; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.1));
+            max-width: 80%; width: 400px; height: auto; display: block; 
+            filter: var(--logo-filter);
+            transition: filter 0.3s ease;
         }
 
         /* 레이아웃 */
@@ -43,7 +209,6 @@
             position: relative;
         }
 
-        /* 반응형 */
         @media (max-width: 1000px) { .layout-row { gap: 40px; } }
         @media (max-width: 768px) {
             .geegle-logo-container { margin-top: 3vh; margin-bottom: 5vh; }
@@ -138,15 +303,13 @@
         .socks { position: absolute; bottom: 15px; width: 100%; height: 20px; background: #fff; border-radius: 5px; }
         .shoes { position: absolute; bottom: -5px; width: 48px; height: 22px; background: #d2b48c; border-radius: 20px 20px 10px 10px; border-bottom: 3px solid #8b4513; left: 1px; z-index: 2; }
 
-        /* 몸통: 상하의 삼베색 통일 */
         .torso { 
             position: relative; width: 120px; height: 120px; background: #dfcfa5; 
             border-radius: 30px 30px 10px 10px; bottom: 70px; z-index: 6; 
             box-shadow: inset -5px 0 10px rgba(0,0,0,0.1); 
-            display: flex; justify-content: center; overflow: hidden; /* 깃이 밖으로 나가는 것 방지 */
+            display: flex; justify-content: center; overflow: hidden; 
         }
         
-        /* 깃(Collar) - Y자(우임) 구현 */
         .collar-inner { 
             position: absolute; top: -20px; left: +12px; width: 80px; height: 25px; 
             background: #d8c8a0; 
@@ -168,7 +331,6 @@
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: #fff;
         }
         
-        /* 밧줄 (오라줄) */
         .rope-container { position: absolute; width: 100%; height: 100%; z-index: 10; pointer-events: none; top: 0; left: 0; }
         .rope-strand { 
             position: absolute; 
@@ -180,7 +342,6 @@
         .rope-cross-2 { width: 130px; height: 10px; top: 45%; left: 50%; transform: translate(-50%, -50%) rotate(-35deg); }
         .rope-waist { width: 100%; height: 10px; top: 75%; left: 0; background: repeating-linear-gradient(90deg, #8a3324, #8a3324 3px, #6e2619 3px, #6e2619 6px); }
 
-        /* 머리 */
         .head { 
             position: relative; width: 74px; height: 90px; background: #e8c39e;
             border-radius: 35px 35px 45px 45px; 
@@ -193,7 +354,6 @@
         .topknot { width: 24px; height: 28px; background: #2a2a2a; border-radius: 10px; position: absolute; top: -20px; left: 50%; transform: translateX(-50%) rotate(-10deg); z-index: 4; }
         .hair-messy { position: absolute; width: 80px; height: 30px; top: -10px; left: -3px; background: #2a2a2a; border-radius: 50% 50% 0 0; z-index: 3; }
 
-        /* --- 이목구비 --- */
         .eyebrows { position: absolute; top: 30px; width: 50px; height: 5px; display: flex; justify-content: space-between; left: 50%; transform: translateX(-50%); transition: all 0.1s; }
         .eyebrow { width: 18px; height: 5px; background: #333; border-radius: 2px; transition: all 0.1s; }
         .eb-left { transform: rotate(20deg); } .eb-right { transform: rotate(-20deg); }
@@ -214,18 +374,18 @@
         .mouth { position: absolute; top: 72px; width: 18px; height: 5px; border-top: 3px solid #333; border-radius: 50%; left: 50%; transform: translateX(-50%); transition: all 0.1s; }
         .person-group.pain .mouth { top: 65px; width: 26px; height: 22px; background: #4a2c2c; border: 2px solid #333; border-radius: 40% 40% 50% 50%; box-shadow: inset 0 -6px 0 #d15c5c; }
 
-        /* 말풍선 */
         #answer-bubble {
             visibility: hidden; position: absolute; 
             bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 30px; 
-            background: white; padding: 15px 20px; width: 220px; max-height: 150px; text-align: center;
-            border-radius: 30px; border: 3px solid #333; box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+            background: var(--bubble-bg); color: var(--bubble-text); 
+            padding: 15px 20px; width: 220px; max-height: 150px; text-align: center;
+            border-radius: 30px; border: 3px solid var(--text-color); box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
             font-size: 16px; font-weight: bold; line-height: 1.4; z-index: 100; pointer-events: none;
+            transition: background 0.3s, color 0.3s, border 0.3s;
         }
-        #answer-bubble::before { content: ''; position: absolute; bottom: -24px; left: 50%; transform: translateX(-50%); border-style: solid; border-width: 24px 12px 0; border-color: #333 transparent transparent transparent; }
-        #answer-bubble::after { content: ''; position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); border-style: solid; border-width: 20px 10px 0; border-color: white transparent transparent transparent; }
+        #answer-bubble::before { content: ''; position: absolute; bottom: -24px; left: 50%; transform: translateX(-50%); border-style: solid; border-width: 24px 12px 0; border-color: var(--text-color) transparent transparent transparent; transition: border-color 0.3s; }
+        #answer-bubble::after { content: ''; position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); border-style: solid; border-width: 20px 10px 0; border-color: var(--bubble-bg) transparent transparent transparent; transition: border-color 0.3s; }
 
-        /* 연기 효과 */
         .smoke-particle {
             position: absolute; border-radius: 50%; pointer-events: none; z-index: 9999;
             filter: blur(5px); animation: smokeRise 2.5s forwards ease-out;
@@ -236,7 +396,6 @@
             100% { opacity: 0; transform: translate(-50%, -180px) scale(2.5) rotate(20deg); background: rgba(255, 255, 255, 0); } 
         }
 
-        /* 화상 자국 */
         .burn-mark {
             position: absolute;
             width: 60px; height: 45px; /* 인두 크기 */
@@ -263,6 +422,35 @@
     </style>
 </head>
 <body>
+
+    <div class="settings-btn-container">
+        <button id="btn-open-settings">⚙️ 설정</button>
+    </div>
+
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-scroll">
+            <div class="scroll-roller-top"></div>
+            <div class="modal-content">
+                <div class="modal-title">상 소 문</div>
+                <div class="modal-desc">
+                    전하! 통촉하여 주시옵소서.<br>
+                    보이는 것을 편의대로 하소서.
+                </div>
+                
+                <div class="setting-section">
+                    <span class="setting-label">주야(晝夜) 설정</span>
+                    <div class="theme-options">
+                        <button class="theme-btn active" id="btn-auto">천리(순리)</button>
+                        <button class="theme-btn" id="btn-light">백주</button>
+                        <button class="theme-btn" id="btn-dark">야밤</button>
+                    </div>
+                </div>
+
+                <button id="btn-close-settings">거두어 주시옵소서 (닫기)</button>
+            </div>
+            <div class="scroll-roller-bottom"></div>
+        </div>
+    </div>
 
     <div class="geegle-logo-container">
         <img src="logo.png" alt="지글(Geegle) 로고" class="geegle-logo-img">
@@ -307,7 +495,6 @@
                     <div class="torso">
                         <div class="collar-inner"></div>
                         <div class="collar-outer"></div>
-                        
                         <div class="rope-container">
                             <div class="rope-strand rope-cross-1"></div>
                             <div class="rope-strand rope-cross-2"></div>
@@ -325,10 +512,75 @@
     </div>
 
     <div style="margin-bottom: 50px;">
-        <input type="text" id="question-input" placeholder="무엇을 알고 싶으냐?" style="padding:15px; width:300px; max-width: 80%; font-family:'Gungsuh'; font-size:16px; border: 3px solid #333; border-radius: 10px; background:#fff;">
+        <input type="text" id="question-input" placeholder="무엇을 알고 싶으냐?" 
+               style="padding:15px; width:300px; max-width: 80%; font-family:'Gungsuh'; font-size:16px; 
+                      border: 3px solid var(--input-border); border-radius: 10px; 
+                      background: var(--input-bg); color: var(--text-color); transition: all 0.3s;">
     </div>
 
     <script>
+        // --- 설정 모달 로직 ---
+        const btnOpenSettings = document.getElementById('btn-open-settings');
+        const btnCloseSettings = document.getElementById('btn-close-settings');
+        const settingsModal = document.getElementById('settings-modal');
+
+        // 모달 열기
+        btnOpenSettings.addEventListener('click', () => {
+            settingsModal.classList.add('open');
+            // 바디에 클래스 추가하여 커서 복구 및 인두 숨김
+            document.body.classList.add('settings-active');
+        });
+
+        // 모달 닫기 함수
+        function closeModal() {
+            settingsModal.classList.remove('open');
+            // 바디 클래스 제거하여 인두 복귀
+            document.body.classList.remove('settings-active');
+        }
+
+        // 닫기 버튼 클릭
+        btnCloseSettings.addEventListener('click', closeModal);
+
+        // 모달 바깥 배경 클릭 시 닫기
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                closeModal();
+            }
+        });
+
+        // --- 테마 관리 로직 ---
+        const btnAuto = document.getElementById('btn-auto');
+        const btnLight = document.getElementById('btn-light');
+        const btnDark = document.getElementById('btn-dark');
+        const buttons = [btnAuto, btnLight, btnDark];
+
+        function setTheme(mode) {
+            buttons.forEach(btn => btn.classList.remove('active'));
+            if(mode === 'auto') btnAuto.classList.add('active');
+            else if(mode === 'light') btnLight.classList.add('active');
+            else if(mode === 'dark') btnDark.classList.add('active');
+
+            if (mode === 'auto') {
+                const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (isSystemDark) document.documentElement.setAttribute('data-theme', 'dark');
+                else document.documentElement.removeAttribute('data-theme');
+            } else {
+                if (mode === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+                else document.documentElement.removeAttribute('data-theme');
+            }
+        }
+
+        setTheme('auto');
+
+        btnAuto.addEventListener('click', () => setTheme('auto'));
+        btnLight.addEventListener('click', () => setTheme('light'));
+        btnDark.addEventListener('click', () => setTheme('dark'));
+
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (btnAuto.classList.contains('active')) setTheme('auto');
+        });
+
+        // --- 기존 지글 로직 ---
         const cursor = document.getElementById('iron-cursor');
         const firePit = document.getElementById('fire-pit-container');
         const person = document.getElementById('person-container');
@@ -351,7 +603,6 @@
             "기억이 날 듯 말 듯 합니다... 한 번만 봐주십시오!"
         ];
 
-        // 질문이 없을 때의 반응
         const noQuestionAnswers = [
             "아니, 묻지도 않고 지지는 법이 어디 있소!!",
             "무.. 무엇을 불라는 겁니까요!! 으악!",
@@ -365,7 +616,6 @@
             "말할 틈은 주셔야지요!! 으아아!!"
         ];
 
-        // 식은 인두로 찔렀을 때 깐족거리는 반응
         const coldMockery = [
             "하나도 안 뜨겁사옵니다! 헤헤.",
             "화로에 불은 떼고 오신 겁니까?",
@@ -405,13 +655,13 @@
         firePit.addEventListener('mouseenter', () => { isHeated = true; cursor.classList.add('heated'); });
 
         document.addEventListener('touchmove', (e) => {
-            if(e.target.closest('#answer-bubble') || e.target.closest('#question-input')) return;
+            if(e.target.closest('#answer-bubble') || e.target.closest('#question-input') || e.target.closest('.modal-scroll')) return;
             const touch = e.touches[0];
             moveIron(touch.pageX, touch.pageY);
         }, { passive: true });
 
         document.addEventListener('touchstart', (e) => {
-            if(e.target.closest('#question-input')) return;
+            if(e.target.closest('#question-input') || e.target.closest('.modal-scroll')) return;
             const touch = e.touches[0];
             moveIron(touch.pageX, touch.pageY);
         }, { passive: true });
@@ -444,12 +694,14 @@
         }
 
         person.addEventListener('click', (e) => {
+            // 설정 모달이 열려있으면 클릭 무시
+            if(settingsModal.classList.contains('open')) return;
+
             const question = questionInput.value.trim(); 
             
             const targetPart = e.target.closest('.head, .torso, .thigh');
             if (!targetPart) return;
 
-            // [수정] 식은 인두: 6초 동안 깐족거림
             if (!isHeated) {
                 const mock = coldMockery[Math.floor(Math.random() * coldMockery.length)];
                 answerBubble.innerText = mock;
@@ -457,11 +709,10 @@
                 
                 setTimeout(() => {
                     answerBubble.style.visibility = 'hidden';
-                }, 6000); // 6초로 증가
+                }, 6000); 
                 return;
             }
 
-            // 뜨거운 인두
             sinnerGroup.classList.add('pain');
 
             let clickX = e.pageX;
@@ -489,10 +740,9 @@
                 
                 setTimeout(() => { 
                     sinnerGroup.classList.remove('pain');
-                    // [수정] 뜨거운 인두 답변: 5초 후 사라짐 (여유있게)
                     setTimeout(() => {
                         answerBubble.style.visibility = 'hidden';
-                    }, 5000); // 5초 유지
+                    }, 5000); 
                 }, 500);
             }, 300);
 
