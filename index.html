@@ -146,68 +146,39 @@
             display: flex; justify-content: center; overflow: hidden; /* 깃이 밖으로 나가는 것 방지 */
         }
         
-        /* [수정] 깃(Collar) - 완벽한 Y자(우임) 구현 */
-        /* 왼쪽 깃 (안쪽) - 짧게 끝나야 X자가 안됨 */
+        /* 깃(Collar) - Y자(우임) 구현 */
         .collar-inner { 
             position: absolute; top: -20px; left: +12px; width: 80px; height: 25px; 
-            background: #d8c8a0; /* 옷보다 약간 진한 색 */
+            background: #d8c8a0; 
             transform-origin: top left; transform: rotate(42deg); 
             z-index: 1; border-bottom: 2px solid rgba(0,0,0,0.05);
         }
-        /* 동정 (흰색 띠) - 왼쪽 */
         .collar-inner::after {
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: #fff;
         }
 
-        /* 오른쪽 깃 (바깥쪽, 덮는 쪽) - 길게 내려와서 왼쪽을 덮음 */
         .collar-outer { 
             position: absolute; top: -20px; right: +12px; width: 90px; height: 25px; 
-            background: #e6d6b0; /* 약간 밝은 색 */
+            background: #e6d6b0; 
             transform-origin: top right; transform: rotate(-42deg); 
             z-index: 2; 
-            box-shadow: -2px 2px 3px rgba(0,0,0,0.1); /* 덮는 그림자 */
+            box-shadow: -2px 2px 3px rgba(0,0,0,0.1); 
         }
-        /* 동정 (흰색 띠) - 오른쪽 */
         .collar-outer::after {
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: #fff;
         }
         
-        /* [수정] 밧줄 (오라줄) - 조선시대 결박 방식 */
+        /* 밧줄 (오라줄) */
         .rope-container { position: absolute; width: 100%; height: 100%; z-index: 10; pointer-events: none; top: 0; left: 0; }
-        
         .rope-strand { 
             position: absolute; 
-            background: repeating-linear-gradient(
-                45deg,
-                #8a3324, #8a3324 3px, /* 오라줄(붉은색) 느낌 */
-                #6e2619 3px, #6e2619 6px
-            );
+            background: repeating-linear-gradient(45deg, #8a3324, #8a3324 3px, #6e2619 3px, #6e2619 6px);
             border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.4); /* 입체감 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4); 
         }
-
-        /* 가슴 X자 결박 (강하게 조임) */
-        .rope-cross-1 { 
-            width: 130px; height: 10px; 
-            top: 45%; left: 50%; 
-            transform: translate(-50%, -50%) rotate(35deg); 
-        }
-        .rope-cross-2 { 
-            width: 130px; height: 10px; 
-            top: 45%; left: 50%; 
-            transform: translate(-50%, -50%) rotate(-35deg); 
-        }
-
-        /* 허리 가로 결박 */
-        .rope-waist {
-            width: 100%; height: 10px;
-            top: 75%; left: 0;
-            background: repeating-linear-gradient(
-                90deg,
-                #8a3324, #8a3324 3px, 
-                #6e2619 3px, #6e2619 6px
-            );
-        }
+        .rope-cross-1 { width: 130px; height: 10px; top: 45%; left: 50%; transform: translate(-50%, -50%) rotate(35deg); }
+        .rope-cross-2 { width: 130px; height: 10px; top: 45%; left: 50%; transform: translate(-50%, -50%) rotate(-35deg); }
+        .rope-waist { width: 100%; height: 10px; top: 75%; left: 0; background: repeating-linear-gradient(90deg, #8a3324, #8a3324 3px, #6e2619 3px, #6e2619 6px); }
 
         /* 머리 */
         .head { 
@@ -394,6 +365,18 @@
             "말할 틈은 주셔야지요!! 으아아!!"
         ];
 
+        // 식은 인두로 찔렀을 때 깐족거리는 반응
+        const coldMockery = [
+            "하나도 안 뜨겁사옵니다! 헤헤.",
+            "화로에 불은 떼고 오신 겁니까?",
+            "간지럽사옵니다 나으리~",
+            "식은 인두로는 어림도 없습니다요!",
+            "아이고~ 시원~하다!",
+            "겁주려거든 제대로 달궈오셔야지요!",
+            "지금 장난하십니까요? ㅋㅋ",
+            "어이쿠, 차가워라!"
+        ];
+
         function moveIron(x, y) {
             if(cursor.style.visibility !== 'visible') {
                 cursor.style.visibility = 'visible';
@@ -461,18 +444,24 @@
         }
 
         person.addEventListener('click', (e) => {
-            const question = questionInput.value.trim(); // 공백 제거
+            const question = questionInput.value.trim(); 
             
-            if (!isHeated) {
-                alert("인두가 식었소! 화로에 대고 달궈오시오!");
-                return;
-            }
-            
-            // 질문이 없어도 진행 (alert 제거됨)
-
             const targetPart = e.target.closest('.head, .torso, .thigh');
             if (!targetPart) return;
 
+            // [수정] 식은 인두: 6초 동안 깐족거림
+            if (!isHeated) {
+                const mock = coldMockery[Math.floor(Math.random() * coldMockery.length)];
+                answerBubble.innerText = mock;
+                answerBubble.style.visibility = 'visible';
+                
+                setTimeout(() => {
+                    answerBubble.style.visibility = 'hidden';
+                }, 6000); // 6초로 증가
+                return;
+            }
+
+            // 뜨거운 인두
             sinnerGroup.classList.add('pain');
 
             let clickX = e.pageX;
@@ -490,7 +479,6 @@
             
             setTimeout(() => {
                 let pick;
-                // 질문 유무에 따라 대사 선택 분기
                 if (question) {
                     pick = randomAnswers[Math.floor(Math.random() * randomAnswers.length)];
                 } else {
@@ -501,6 +489,10 @@
                 
                 setTimeout(() => { 
                     sinnerGroup.classList.remove('pain');
+                    // [수정] 뜨거운 인두 답변: 5초 후 사라짐 (여유있게)
+                    setTimeout(() => {
+                        answerBubble.style.visibility = 'hidden';
+                    }, 5000); // 5초 유지
                 }, 500);
             }, 300);
 
