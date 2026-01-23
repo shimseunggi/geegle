@@ -11,14 +11,15 @@
             display: flex; flex-direction: column; align-items: center;
             font-family: 'Gungsuh', serif;
             overflow-x: hidden;
-            touch-action: none; 
+            /* [수정] 스크롤 허용을 위해 touch-action: none 제거 -> pan-y(수직 스크롤 허용)로 변경 */
+            touch-action: pan-y; 
+            -webkit-overflow-scrolling: touch; /* 부드러운 스크롤 */
         }
 
         /* 로고 */
         .geegle-logo-container {
             display: flex; justify-content: center; align-items: center;
-            margin-top: 5vh; margin-bottom: 8vh; /* 말풍선 공간 확보를 위해 여백 증가 */
-            z-index: 10;
+            margin-top: 5vh; margin-bottom: 5vh; z-index: 10;
             width: 100%; 
         }
         .geegle-logo-img {
@@ -37,11 +38,29 @@
             position: relative;
         }
 
-        /* 반응형 */
+        /* 반응형 (모바일 최적화) */
         @media (max-width: 1000px) { .layout-row { gap: 40px; } }
         @media (max-width: 768px) {
-            .layout-row { flex-direction: column; align-items: center; gap: 150px; } /* 모바일 간격 확보 */
+            /* 모바일에서 로고 마진 줄임 */
+            .geegle-logo-container { margin-top: 3vh; margin-bottom: 3vh; }
+            
+            /* 요소 간 간격 조정 */
+            .layout-row { flex-direction: column; align-items: center; gap: 80px; } 
+            
             .item-wrapper { transform: scale(0.9); }
+            
+            /* 말풍선 위치 모바일 최적화 */
+            #answer-bubble {
+                left: 50% !important; 
+                top: auto !important; bottom: 100% !important; /* 머리 위로 배치 */
+                right: auto !important;
+                transform: translateX(-50%) !important; 
+                width: 200px !important; 
+                margin-bottom: 20px !important;
+            }
+            /* 말풍선 꼬리 */
+            #answer-bubble::before { bottom: -24px !important; left: 50% !important; transform: translateX(-50%) !important; }
+            #answer-bubble::after { bottom: -18px !important; left: 50% !important; transform: translateX(-50%) !important; }
         }
 
         /* 화로 디자인 */
@@ -97,7 +116,7 @@
         #iron-cursor.heated .iron-rod { background: linear-gradient(90deg, #ff2400 0%, #cc3300 30%, #333 70%); }
 
         /* =========================================
-           죄인 캐릭터
+           죄인 캐릭터 및 애니메이션
            ========================================= */
         #person-container {
             width: 200px; height: 320px; 
@@ -112,6 +131,7 @@
             animation: shiver 1s infinite; 
         }
         @keyframes shiver { 0% { transform: translateX(0); } 25% { transform: translateX(1px); } 75% { transform: translateX(-1px); } 100% { transform: translateX(0); } }
+        
         /* 고통 받을 때 미친듯이 떨림 */
         @keyframes shiver-violent { 0% { transform: translate(0, 0); } 25% { transform: translate(3px, 3px); } 50% { transform: translate(-3px, -3px); } 75% { transform: translate(3px, -3px); } 100% { transform: translate(0, 0); } }
 
@@ -191,14 +211,14 @@
         }
 
         /* =========================================
-           [수정] 말풍선 디자인 (깔끔한 타원형 + 위치 수정)
+           말풍선 (위치 개선)
            ========================================= */
         #answer-bubble {
             visibility: hidden; 
             position: absolute; 
-            /* 캐릭터 머리 바로 위에 위치하도록 조정 */
+            /* 캐릭터 머리 바로 위 */
             bottom: 100%; left: 50%; transform: translateX(-50%);
-            margin-bottom: 30px; /* 머리와의 간격 */
+            margin-bottom: 30px; 
             
             background: white; 
             padding: 15px 20px; 
@@ -206,7 +226,6 @@
             max-height: 150px; 
             text-align: center;
             
-            /* 둥근 사각형/타원 형태 */
             border-radius: 30px;
             border: 3px solid #333; 
             box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
@@ -215,17 +234,15 @@
             z-index: 100; pointer-events: none;
         }
 
-        /* 말풍선 꼬리 (테두리) */
+        /* 말풍선 꼬리 */
         #answer-bubble::before { 
             content: ''; position: absolute; 
             bottom: -24px; left: 50%; 
             transform: translateX(-50%);
             border-style: solid; 
-            border-width: 24px 12px 0; /* 아래로 뾰족한 삼각형 */
+            border-width: 24px 12px 0; 
             border-color: #333 transparent transparent transparent; 
         }
-
-        /* 말풍선 꼬리 (내부 흰색 - 테두리 덮기용) */
         #answer-bubble::after { 
             content: ''; position: absolute; 
             bottom: -18px; left: 50%; 
@@ -352,17 +369,20 @@
         document.addEventListener('mousemove', (e) => { moveIron(e.pageX, e.pageY); });
         firePit.addEventListener('mouseenter', () => { isHeated = true; cursor.classList.add('heated'); });
 
+        // [수정] 모바일 스크롤을 위해 preventDefault를 조건부로 처리하거나 아예 제거
+        // 여기서는 passive: true로 스크롤 성능을 확보하고, preventDefault를 쓰지 않음.
+        // 인두는 스크롤된 위치(touch.pageX/Y)를 따라 잘 움직임.
         document.addEventListener('touchmove', (e) => {
             if(e.target.closest('#answer-bubble') || e.target.closest('#question-input')) return;
             const touch = e.touches[0];
             moveIron(touch.pageX, touch.pageY);
-        }, { passive: false });
+        }, { passive: true });
 
         document.addEventListener('touchstart', (e) => {
             if(e.target.closest('#question-input')) return;
             const touch = e.touches[0];
             moveIron(touch.pageX, touch.pageY);
-        }, { passive: false });
+        }, { passive: true });
 
         person.addEventListener('click', (e) => {
             const question = questionInput.value;
