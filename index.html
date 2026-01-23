@@ -380,6 +380,20 @@
             "기억이 날 듯 말 듯 합니다... 한 번만 봐주십시오!"
         ];
 
+        // 질문이 없을 때의 반응
+        const noQuestionAnswers = [
+            "아니, 묻지도 않고 지지는 법이 어디 있소!!",
+            "무.. 무엇을 불라는 겁니까요!! 으악!",
+            "이유나 알고 맞읍시다 나으리!!",
+            "심심해서 지지시는 겁니까!! 너무하오!!",
+            "질문이 없는데 대답을 어찌 하오리까!!",
+            "그냥 제가 다 잘못했습니다요!! (근데 뭘?)",
+            "악!! 살려주시오! 묻는 건 다 말하리다!!",
+            "아이쿠 뜨거!! 사람 살려!!",
+            "일단 지지고 보는 겁니까요? 억울하옵니다!!",
+            "말할 틈은 주셔야지요!! 으아아!!"
+        ];
+
         function moveIron(x, y) {
             if(cursor.style.visibility !== 'visible') {
                 cursor.style.visibility = 'visible';
@@ -440,29 +454,21 @@
         function createBurnMark(x, y) {
             const mark = document.createElement('div');
             mark.className = 'burn-mark';
-            
             mark.style.left = (x - 20) + 'px'; 
             mark.style.top = (y - 20) + 'px';  
-            
             document.body.appendChild(mark);
-            
-            setTimeout(() => {
-                mark.remove();
-            }, 800); 
+            setTimeout(() => { mark.remove(); }, 800); 
         }
 
         person.addEventListener('click', (e) => {
-            const question = questionInput.value;
+            const question = questionInput.value.trim(); // 공백 제거
             
             if (!isHeated) {
                 alert("인두가 식었소! 화로에 대고 달궈오시오!");
                 return;
             }
-            if (!question) {
-                alert("질문도 없이 지지면 어떡하오!");
-                questionInput.focus();
-                return;
-            }
+            
+            // 질문이 없어도 진행 (alert 제거됨)
 
             const targetPart = e.target.closest('.head, .torso, .thigh');
             if (!targetPart) return;
@@ -483,7 +489,14 @@
             answerBubble.innerText = "으아아악!!!";
             
             setTimeout(() => {
-                const pick = randomAnswers[Math.floor(Math.random() * randomAnswers.length)];
+                let pick;
+                // 질문 유무에 따라 대사 선택 분기
+                if (question) {
+                    pick = randomAnswers[Math.floor(Math.random() * randomAnswers.length)];
+                } else {
+                    pick = noQuestionAnswers[Math.floor(Math.random() * noQuestionAnswers.length)];
+                }
+                
                 answerBubble.innerText = pick;
                 
                 setTimeout(() => { 
