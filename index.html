@@ -6,53 +6,45 @@
     <title>기글 (Geegle) - 조선의 검색 엔진</title>
     <style>
         body {
-            margin: 0; min-height: 100vh; background-color: #e0e0e0;
-            cursor: none; /* 기본 커서 숨김 */
+            margin: 0; min-height: 100vh; background-color: #f0f0f0;
+            cursor: none; 
             display: flex; flex-direction: column; align-items: center;
             font-family: 'Gungsuh', serif;
             overflow-x: hidden;
             touch-action: none; 
         }
 
-        /* 로고 스타일 */
+        /* 로고 */
         .geegle-logo-container {
             display: flex; justify-content: center; align-items: center;
-            margin-top: 5vh; margin-bottom: 5vh; z-index: 10;
-            filter: drop-shadow(5px 5px 2px rgba(0,0,0,0.2));
+            margin-top: 5vh; margin-bottom: 8vh; /* 말풍선 공간 확보를 위해 여백 증가 */
+            z-index: 10;
             width: 100%; 
         }
         .geegle-logo-img {
-            max-width: 80%; width: 600px; height: auto; display: block;
+            max-width: 80%; width: 400px; height: auto; display: block; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.1));
         }
 
         /* 레이아웃 */
         .layout-row { 
-            display: flex; flex-direction: row; gap: 60px; 
+            display: flex; flex-direction: row; gap: 80px; 
             align-items: flex-end; justify-content: center;
             margin-bottom: 30px; flex-wrap: wrap; 
         }
         .item-wrapper {
             display: flex; justify-content: center; align-items: center;
             transition: transform 0.3s ease;
+            position: relative;
         }
 
-        /* 반응형 미디어 쿼리 */
+        /* 반응형 */
         @media (max-width: 1000px) { .layout-row { gap: 40px; } }
         @media (max-width: 768px) {
-            .layout-row { flex-direction: column; align-items: center; gap: 30px; }
-            .item-wrapper { transform: scale(0.85); }
-            #answer-bubble {
-                left: 50% !important; top: -110px !important; 
-                transform: translateX(-50%) !important; width: 220px !important; text-align: center !important;
-            }
-            #answer-bubble::before { border-color: black transparent transparent transparent !important; border-width: 24px 15px 0 15px !important; top: 100% !important; left: 50% !important; }
-            #answer-bubble::after { border-color: white transparent transparent transparent !important; border-width: 18px 12px 0 12px !important; top: 100% !important; left: 50% !important; }
+            .layout-row { flex-direction: column; align-items: center; gap: 150px; } /* 모바일 간격 확보 */
+            .item-wrapper { transform: scale(0.9); }
         }
-        @media (max-width: 400px) { .item-wrapper { transform: scale(0.7); margin: -20px 0; } }
 
-        /* =========================================
-           화로 디자인
-           ========================================= */
+        /* 화로 디자인 */
         #fire-pit-container {
             position: relative; width: 300px; height: 300px;
             display: flex; justify-content: center; align-items: center;
@@ -69,18 +61,10 @@
             border-bottom-color: #2d1e19; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
             box-sizing: border-box; z-index: 2; overflow: hidden; display: flex; justify-content: center; align-items: center;
         }
-
-        /* 숯덩이 스타일 (공통) */
         .coal { 
-            position: absolute; 
-            background: #1a1a1a; 
-            box-shadow: inset 0 0 15px #8b0000; 
-            animation: glow 2s infinite alternate ease-in-out; 
-            border-radius: 40% 60% 50% 50% / 50% 40% 60% 50%; /* 덜 정형화된 모양 */
+            position: absolute; background: #1a1a1a; box-shadow: inset 0 0 15px #8b0000; 
+            animation: glow 2s infinite alternate ease-in-out; border-radius: 40% 60% 50% 50%;
         }
-        
-        /* [수정] 숯 25개 배치 (수북한 느낌) */
-        /* 1층 (바닥) */
         .c1 { width: 60px; height: 50px; left: 20px; top: 20px; transform: rotate(10deg); }
         .c2 { width: 70px; height: 60px; right: 20px; top: 15px; transform: rotate(-20deg); }
         .c3 { width: 55px; height: 55px; left: 110px; top: 10px; z-index: 1; }
@@ -88,8 +72,6 @@
         .c5 { width: 60px; height: 50px; right: 60px; bottom: 15px; }
         .c6 { width: 50px; height: 50px; left: 10px; top: 40px; transform: rotate(45deg); }
         .c7 { width: 55px; height: 45px; right: 10px; top: 40px; transform: rotate(-15deg); }
-        
-        /* 2층 (중간) */
         .c8 { width: 65px; height: 55px; left: 40px; top: 10px; transform: rotate(-10deg); z-index: 2; }
         .c9 { width: 60px; height: 60px; right: 40px; top: 10px; transform: rotate(20deg); z-index: 2; }
         .c10 { width: 50px; height: 50px; left: 90px; top: 5px; z-index: 2; background: #220000; }
@@ -101,7 +83,7 @@
         .fire-glow { position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, rgba(200, 20, 0, 0.6) 0%, rgba(255,0,0,0) 70%); mix-blend-mode: screen; animation: flicker 0.15s infinite; pointer-events: none; z-index: 5; }
         @keyframes flicker { 0% { opacity: 0.7; transform: scale(1); } 50% { opacity: 0.9; transform: scale(1.02); } 100% { opacity: 0.8; transform: scale(0.98); } }
 
-        /* 인두 커서 (오차 해결됨) */
+        /* 인두 커서 */
         #iron-cursor {
             position: absolute; pointer-events: none; width: 200px; height: 40px; z-index: 9999;
             transform-origin: left center; transform: translate(0px, -20px) rotate(30deg);
@@ -114,15 +96,144 @@
         #iron-cursor.heated .iron-head { background: #ff2400; filter: drop-shadow(0 0 10px #ff4500); }
         #iron-cursor.heated .iron-rod { background: linear-gradient(90deg, #ff2400 0%, #cc3300 30%, #333 70%); }
 
-        /* 용의자 및 UI */
-        #suspect {
-            width: 200px; height: 280px; background: #eee; border: 4px solid #333; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; cursor: pointer;
+        /* =========================================
+           죄인 캐릭터
+           ========================================= */
+        #person-container {
+            width: 200px; height: 320px; 
+            position: relative; cursor: pointer;
+            display: flex; justify-content: center; align-items: flex-end;
         }
+
+        .person-group {
+            position: absolute; bottom: 20px; width: 100%; height: 300px;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+            z-index: 5;
+            animation: shiver 1s infinite; 
+        }
+        @keyframes shiver { 0% { transform: translateX(0); } 25% { transform: translateX(1px); } 75% { transform: translateX(-1px); } 100% { transform: translateX(0); } }
+        /* 고통 받을 때 미친듯이 떨림 */
+        @keyframes shiver-violent { 0% { transform: translate(0, 0); } 25% { transform: translate(3px, 3px); } 50% { transform: translate(-3px, -3px); } 75% { transform: translate(3px, -3px); } 100% { transform: translate(0, 0); } }
+
+        .person-group.pain {
+            animation: shiver-violent 0.08s infinite !important;
+        }
+
+        /* 다리 & 몸통 */
+        .legs { position: absolute; bottom: 0; width: 110px; height: 110px; display: flex; justify-content: space-between; z-index: 5; }
+        .thigh { width: 50px; height: 100px; background: #e8e8e8; border-radius: 10px 10px 20px 20px; box-shadow: inset 2px -5px 10px rgba(0,0,0,0.1); position: relative; }
+        .socks { position: absolute; bottom: 15px; width: 100%; height: 20px; background: #fff; border-radius: 5px; }
+        .shoes { position: absolute; bottom: -5px; width: 48px; height: 22px; background: #d2b48c; border-radius: 20px 20px 10px 10px; border-bottom: 3px solid #8b4513; left: 1px; z-index: 2; }
+
+        .torso { width: 120px; height: 120px; background: #f0f0f0; border-radius: 30px 30px 10px 10px; position: relative; bottom: 70px; z-index: 6; box-shadow: inset -5px 0 10px rgba(0,0,0,0.05); display: flex; justify-content: center; }
+        .collar-left { position: absolute; top: 10px; width: 65px; height: 55px; border-top: 10px solid #e0e0e0; transform: rotate(45deg); left: 10px; }
+        .collar-right { position: absolute; top: 10px; width: 65px; height: 55px; border-top: 10px solid #d0d0d0; transform: rotate(-45deg); right: 10px; }
+        
+        .rope { position: absolute; width: 100%; height: 100%; z-index: 7; }
+        .rope-strand { position: absolute; background: #8b5a2b; border-radius: 5px; }
+        .rs1 { width: 110px; height: 8px; top: 40px; left: 5px; transform: rotate(5deg); }
+        .rs2 { width: 110px; height: 8px; top: 60px; left: 5px; transform: rotate(-5deg); }
+        .rs3 { width: 8px; height: 60px; top: 30px; left: 30px; }
+        .rs4 { width: 8px; height: 60px; top: 30px; right: 30px; }
+
+        /* 머리 */
+        .head { 
+            width: 74px; height: 90px; background: #e8c39e;
+            border-radius: 35px 35px 45px 45px; 
+            position: relative; bottom: 60px; z-index: 7; 
+            box-shadow: inset 0 -3px 5px rgba(0,0,0,0.1), 0 5px 10px rgba(0,0,0,0.1);
+            border: 2px solid #c6a37e;
+            transition: transform 0.1s;
+        }
+        .person-group.pain .head { transform: scale(0.95); }
+
+        .topknot { width: 24px; height: 28px; background: #2a2a2a; border-radius: 10px; position: absolute; top: -20px; left: 50%; transform: translateX(-50%) rotate(-10deg); z-index: 4; }
+        .hair-messy { position: absolute; width: 80px; height: 30px; top: -10px; left: -3px; background: #2a2a2a; border-radius: 50% 50% 0 0; z-index: 3; }
+
+        /* --- 이목구비 --- */
+        .eyebrows { position: absolute; top: 30px; width: 50px; height: 5px; display: flex; justify-content: space-between; left: 50%; transform: translateX(-50%); transition: all 0.1s; }
+        .eyebrow { width: 18px; height: 5px; background: #333; border-radius: 2px; transition: all 0.1s; }
+        .eb-left { transform: rotate(20deg); } 
+        .eb-right { transform: rotate(-20deg); }
+        
+        .person-group.pain .eyebrows { top: 35px; width: 45px; }
+        .person-group.pain .eb-left { transform: rotate(40deg); }
+        .person-group.pain .eb-right { transform: rotate(-40deg); }
+
+        /* 눈 */
+        .eyes { position: absolute; top: 44px; width: 48px; height: 12px; display: flex; justify-content: space-between; left: 50%; transform: translateX(-50%); }
+        .eye { 
+            width: 14px; height: 6px; background: transparent; 
+            border-top: 3px solid #333; border-radius: 50% 50% 0 0; 
+            position: relative; transition: all 0.1s; 
+        }
+
+        /* 고통 시 눈 (확실한 > < 모양) */
+        .person-group.pain .eye {
+            border-radius: 0; border: none; width: 10px; height: 10px; background: transparent;
+            border-top: 4px solid #222; border-right: 4px solid #222; margin-top: -2px;
+        }
+        .person-group.pain .eye.left { transform: rotate(45deg); } 
+        .person-group.pain .eye.right { border-right: none; border-left: 4px solid #222; transform: rotate(-45deg); }
+        
+        .nose { position: absolute; top: 52px; width: 8px; height: 12px; background: #c6a37e; border-radius: 5px; left: 50%; transform: translateX(-50%); }
+
+        .mouth { 
+            position: absolute; top: 72px; width: 18px; height: 5px; 
+            border-top: 3px solid #333; border-radius: 50%; 
+            left: 50%; transform: translateX(-50%); 
+            transition: all 0.1s; 
+        }
+
+        .person-group.pain .mouth {
+            top: 65px; width: 26px; height: 22px;
+            background: #4a2c2c; border: 2px solid #333; border-radius: 40% 40% 50% 50%; box-shadow: inset 0 -6px 0 #d15c5c;
+        }
+
+        /* =========================================
+           [수정] 말풍선 디자인 (깔끔한 타원형 + 위치 수정)
+           ========================================= */
         #answer-bubble {
-            visibility: hidden; position: absolute; top: 20px; left: 220px; background: white; padding: 20px; border-radius: 30px; border: 4px solid black; width: 250px; max-height: 150px; overflow-y: auto; box-shadow: 8px 8px 0px rgba(0,0,0,0.3); font-size: 16px; font-weight: bold; text-align: left; line-height: 1.5; z-index: 100;
+            visibility: hidden; 
+            position: absolute; 
+            /* 캐릭터 머리 바로 위에 위치하도록 조정 */
+            bottom: 100%; left: 50%; transform: translateX(-50%);
+            margin-bottom: 30px; /* 머리와의 간격 */
+            
+            background: white; 
+            padding: 15px 20px; 
+            width: 220px; 
+            max-height: 150px; 
+            text-align: center;
+            
+            /* 둥근 사각형/타원 형태 */
+            border-radius: 30px;
+            border: 3px solid #333; 
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+            
+            font-size: 16px; font-weight: bold; line-height: 1.4; 
+            z-index: 100; pointer-events: none;
         }
-        #answer-bubble::before { content: ''; position: absolute; top: 50%; left: -24px; transform: translateY(-50%); border-style: solid; border-width: 15px 24px 15px 0; border-color: transparent black transparent transparent; }
-        #answer-bubble::after { content: ''; position: absolute; top: 50%; left: -18px; transform: translateY(-50%); border-style: solid; border-width: 12px 18px 12px 0; border-color: transparent white transparent transparent; }
+
+        /* 말풍선 꼬리 (테두리) */
+        #answer-bubble::before { 
+            content: ''; position: absolute; 
+            bottom: -24px; left: 50%; 
+            transform: translateX(-50%);
+            border-style: solid; 
+            border-width: 24px 12px 0; /* 아래로 뾰족한 삼각형 */
+            border-color: #333 transparent transparent transparent; 
+        }
+
+        /* 말풍선 꼬리 (내부 흰색 - 테두리 덮기용) */
+        #answer-bubble::after { 
+            content: ''; position: absolute; 
+            bottom: -18px; left: 50%; 
+            transform: translateX(-50%);
+            border-style: solid; 
+            border-width: 20px 10px 0; 
+            border-color: white transparent transparent transparent; 
+        }
     </style>
 </head>
 <body>
@@ -145,46 +256,73 @@
                     <div class="coal c1"></div> <div class="coal c2"></div> <div class="coal c3"></div> <div class="coal c4"></div> <div class="coal c5"></div>
                     <div class="coal c6"></div> <div class="coal c7"></div> <div class="coal c8"></div> <div class="coal c9"></div> <div class="coal c10"></div>
                     <div class="coal c11"></div> <div class="coal c12"></div> <div class="coal c13"></div> <div class="coal c14"></div> <div class="coal c15"></div>
-                    <div class="coal c16"></div> <div class="coal c17"></div> <div class="coal c18"></div> <div class="coal c19"></div> <div class="coal c20"></div>
-                    <div class="coal c21"></div> <div class="coal c22"></div> <div class="coal c23"></div> <div class="coal c24"></div> <div class="coal c25"></div>
                 </div>
                 <div class="earthen-pot"></div>
             </div>
         </div>
 
         <div class="item-wrapper">
-            <div id="suspect">
+            <div id="person-container">
                 <div id="answer-bubble"></div>
-                <div style="font-size: 50px;">👤</div>
-                <h3>죄인 (랜덤 답변)</h3>
+
+                <div class="person-group" id="sinner-group">
+                    <div class="head">
+                        <div class="hair-messy"></div>
+                        <div class="topknot"></div>
+                        <div class="eyebrows">
+                            <div class="eyebrow eb-left"></div><div class="eyebrow eb-right"></div>
+                        </div>
+                        <div class="eyes">
+                            <div class="eye left"></div><div class="eye right"></div>
+                        </div>
+                        <div class="nose"></div>
+                        <div class="mouth" id="sinner-mouth"></div>
+                    </div>
+                    <div class="torso">
+                        <div class="collar-right"></div>
+                        <div class="collar-left"></div>
+                        <div class="rope">
+                            <div class="rope-strand rs1"></div>
+                            <div class="rope-strand rs2"></div>
+                            <div class="rope-strand rs3"></div>
+                            <div class="rope-strand rs4"></div>
+                        </div>
+                    </div>
+                    <div class="legs">
+                        <div class="thigh"><div class="shoes"></div></div>
+                        <div class="thigh"><div class="shoes"></div></div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 
     <div style="margin-bottom: 50px;">
-        <input type="text" id="question-input" placeholder="무엇을 알고 싶으냐?" style="padding:15px; width:300px; max-width: 80%; font-family:'Gungsuh'; font-size:16px; border: 3px solid black; border-radius: 10px;">
+        <input type="text" id="question-input" placeholder="무엇을 알고 싶으냐?" style="padding:15px; width:300px; max-width: 80%; font-family:'Gungsuh'; font-size:16px; border: 3px solid #333; border-radius: 10px; background:#fff;">
     </div>
 
     <script>
         const cursor = document.getElementById('iron-cursor');
         const firePit = document.getElementById('fire-pit-container');
-        const suspect = document.getElementById('suspect');
+        const person = document.getElementById('person-container');
         const answerBubble = document.getElementById('answer-bubble');
         const questionInput = document.getElementById('question-input');
+        const sinnerGroup = document.getElementById('sinner-group');
 
         let isHeated = false;
 
         const randomAnswers = [
-            "으악! 기글(Geegle) 검색 결과가 없소!",
-            "저잣거리의 김씨가 범인이오! 나는 아니오!",
-            "그건... 옆집 개똥이에게 물어보시오!",
-            "아이고 나 죽네! 살려만 주시면 다 불겠소!",
-            "사실... 내가 곶감 하나 훔쳐 먹었소...",
-            "그것은 네이버 대감에게 물어보시오!",
-            "뜨겁소! 제발 그 인두 좀 치워주시오!",
-            "나는 억울하오! 하늘이 알고 땅이 아오!",
-            "배가 고파서 그랬소...",
-            "기억이 날 듯 말 듯 하오... 한 번만 더 지져주시오(?)"
+            "으악!! 제.. 제가 그랬습니다요!!",
+            "억울합니다!! 저잣거리 김씨가 범인이라니까요!",
+            "그건.. 옆집 개똥이가 알지도 모릅니다.. 으윽!",
+            "아이고 나 죽네!! 살려만 주시면 다 불겠습니다!!",
+            "사실.. 제가 곶감 하나 훔쳐 먹긴 했습니다..!!",
+            "그건 관아에 가서 물어보셔야지요! 아악!",
+            "뜨거워!! 제발 그 인두 좀 치워주십시오!!",
+            "저는 그저 시키는 대로 했을 뿐입니다요! ㅠㅠ",
+            "배가 고파서 정신이.. 으아악!!",
+            "기억이 날 듯 말 듯 합니다... 한 번만 봐주십시오!"
         ];
 
         function moveIron(x, y) {
@@ -226,10 +364,11 @@
             moveIron(touch.pageX, touch.pageY);
         }, { passive: false });
 
-        suspect.addEventListener('click', (e) => {
+        person.addEventListener('click', (e) => {
             const question = questionInput.value;
+            
             if (!isHeated) {
-                alert("인두가 식었소! 화로에 대고 달구시오!");
+                alert("인두가 식었소! 화로에 대고 달궈오시오!");
                 return;
             }
             if (!question) {
@@ -237,15 +376,22 @@
                 questionInput.focus();
                 return;
             }
-            document.body.style.transform = "translate(3px, 3px)";
-            setTimeout(() => document.body.style.transform = "translate(-3px, -3px)", 50);
-            setTimeout(() => document.body.style.transform = "translate(0, 0)", 100);
+
+            sinnerGroup.classList.add('pain');
+
             answerBubble.style.visibility = 'visible';
-            answerBubble.innerText = "으윽... 검색 중이오...";
+            answerBubble.innerText = "으아아악!!!";
+            
             setTimeout(() => {
                 const pick = randomAnswers[Math.floor(Math.random() * randomAnswers.length)];
                 answerBubble.innerText = pick;
-            }, 500);
+                
+                // 0.5초 후 표정 및 상태 원상복구
+                setTimeout(() => { 
+                    sinnerGroup.classList.remove('pain');
+                }, 500);
+            }, 300);
+
             isHeated = false;
             cursor.classList.remove('heated');
         });
