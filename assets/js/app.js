@@ -4,11 +4,9 @@
 function $(sel) { return document.querySelector(sel); }
 
 function getPointerFromEvent(e) {
-  // mouse event
   if (typeof e.clientX === 'number') {
     return { clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY };
   }
-  // touch event
   const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
   if (t) {
     return { clientX: t.clientX, clientY: t.clientY, pageX: t.pageX, pageY: t.pageY };
@@ -38,7 +36,7 @@ function closeModal() {
     if (!settingsModal.classList.contains('open')) {
       document.body.classList.remove('settings-active');
     }
-  }, 600);
+  }, 250);
 }
 btnCloseSettings.addEventListener('click', closeModal);
 settingsModal.addEventListener('click', (e) => {
@@ -90,28 +88,28 @@ const clearBtn = $('.clear-btn');
 const cursor = $('#iron-cursor');
 const firePit = $('#fire-pit-container');
 const firePitWrapper = firePit.closest('.item-wrapper');
+const pot = document.querySelector('.earthen-pot');
 
 const person = $('#person-container');
 const answerBubble = $('#answer-bubble');
 const sinnerGroup = $('#sinner-group');
 
 // ============================
-// ✅ 5초 타이머(달궈짐) + 숫자 카운트다운(화로 왼쪽 아래)
+// ✅ 5초 달궈짐 + 항아리 위 5~1 표시
 // ============================
 const HEAT_DURATION_MS = 5000;   // ✅ 15s -> 5s
-const HEAT_TICK_MS = 100;        // 업데이트 주기(부드럽게)
+const HEAT_TICK_MS = 100;        // 부드럽게 갱신
 const BURN_LIFETIME_MS = 8000;   // burnFadeOut 8s와 맞춤
 
 let isHeated = false;
 let heatTimer = null;
 let heatTickTimer = null;
 let heatEndsAt = 0;
+let lastRemainSec = null;
+
 let bubbleTimer = null;
 
-// ----------------------------
-// 모바일 화로 UX 요소 생성
-// (힌트 + 펄스 + ✅ 숫자 카운트 엘리먼트)
-// ----------------------------
+// 모바일 UX 요소
 const HINT_KEY = 'geegle_fire_hint_seen';
 
 const fireHint = document.createElement('div');
@@ -123,15 +121,6 @@ const firePulse = document.createElement('div');
 firePulse.className = 'firepit-pulse';
 firePitWrapper.appendChild(firePulse);
 
-// ✅ CSS에 새로 만든 .heat-count 를 사용
-let heatCountEl = firePitWrapper.querySelector('.heat-count');
-if (!heatCountEl) {
-  heatCountEl = document.createElement('div');
-  heatCountEl.className = 'heat-count';
-  heatCountEl.textContent = '';
-  firePitWrapper.appendChild(heatCountEl);
-}
-
 function showFireHintIfNeeded() {
   if (!isMobile()) return;
   const seen = localStorage.getItem(HINT_KEY) === '1';
@@ -141,25 +130,26 @@ function markHintSeen() {
   localStorage.setItem(HINT_KEY, '1');
   fireHint.classList.remove('show');
 }
-
 showFireHintIfNeeded();
 window.addEventListener('resize', showFireHintIfNeeded);
 
-// ----------------------------
-// Heat UI 제어
-// ----------------------------
-function updateHeatCountUI(remainMs) {
-  if (!isMobile()) return;
+// ✅ 달궈진 상태가 아니면(=data-heat="") 항아리 숫자 숨김
+function setPotCount(sec) {
+  // sec가 0이면 숨김
+  pot.setAttribute('data-heat', sec > 0 ? String(sec) : '');
 
-  const remainS = Math.max(0, Math.ceil(remainMs / 1000));
-  heatCountEl.textContent = `${remainS}`;
-  if (remainMs > 0) heatCountEl.classList.add('show');
-  else heatCountEl.classList.remove('show');
+  // 숫자 바뀌는 순간만 “도장” 애니
+  pot.classList.remove('stamp');
+  // reflow로 애니 재시작
+  void pot.offsetWidth;
+  pot.classList.add('stamp');
 }
 
 function stopHeatUI() {
-  heatCountEl.classList.remove('show');
-  if (isMobile()) firePulse.classList.add('on'); // 모바일 유도 펄스 ON
+  setPotCount(0); // ✅ 즉시 숨김
+  lastRemainSec = null;
+
+  if (isMobile()) firePulse.classList.add('on');
   if (heatTickTimer) {
     clearInterval(heatTickTimer);
     heatTickTimer = null;
@@ -168,19 +158,24 @@ function stopHeatUI() {
 
 function startHeatTimer() {
   if (heatTimer) clearTimeout(heatTimer);
-
   heatEndsAt = Date.now() + HEAT_DURATION_MS;
 
-  // 모바일에서만: 펄스 OFF + 숫자 표시 ON
-  if (isMobile()) {
-    firePulse.classList.remove('on');
-    updateHeatCountUI(HEAT_DURATION_MS);
-  }
+  if (isMobile()) firePulse.classList.remove('on');
+
+  // 시작 즉시 5 표시
+  lastRemainSec = null;
+  setPotCount(5);
 
   if (heatTickTimer) clearInterval(heatTickTimer);
   heatTickTimer = setInterval(() => {
     const remainMs = Math.max(0, heatEndsAt - Date.now());
-    updateHeatCountUI(remainMs);
+    const remainS = Math.max(0, Math.ceil(remainMs / 1000));
+
+    // 초가 바뀔 때만 업데이트(5→4→3→2→1)
+    if (remainS !== lastRemainSec) {
+      lastRemainSec = remainS;
+      setPotCount(remainS);
+    }
 
     if (remainMs <= 0) {
       clearInterval(heatTickTimer);
@@ -191,7 +186,7 @@ function startHeatTimer() {
   heatTimer = setTimeout(() => {
     isHeated = false;
     cursor.classList.remove('heated');
-    stopHeatUI();
+    stopHeatUI(); // ✅ 식으면 숫자 사라짐
   }, HEAT_DURATION_MS);
 }
 
@@ -203,7 +198,7 @@ function heatUp() {
   startHeatTimer();
 }
 
-// 처음엔 모바일에서만 펄스로 유도
+// 모바일 유도 펄스
 if (isMobile()) firePulse.classList.add('on');
 
 // ============================
@@ -285,8 +280,7 @@ clearBtn.addEventListener('click', () => {
 });
 
 // ============================
-// 커서 이동 + 화로 충돌 체크
-// (fixed 화로에서도 정확히 동작하도록 client 좌표 기준)
+// 커서 이동 + 화로 충돌 체크 (client 좌표)
 // ============================
 function moveIron(pageX, pageY) {
   if (cursor.style.visibility !== 'visible') cursor.style.visibility = 'visible';
@@ -295,7 +289,7 @@ function moveIron(pageX, pageY) {
 }
 
 function checkHeatCollision(clientX, clientY) {
-  const rect = firePit.getBoundingClientRect(); // viewport 좌표
+  const rect = firePit.getBoundingClientRect();
   const inside =
     clientX >= rect.left &&
     clientX <= rect.right &&
@@ -329,10 +323,10 @@ document.addEventListener('touchstart', (e) => {
   checkHeatCollision(p.clientX, p.clientY);
 }, { passive: true });
 
-// 화로에 마우스 진입(PC)
+// PC: 화로에 마우스 진입
 firePit.addEventListener('mouseenter', () => { heatUp(); });
 
-// ✅ 모바일: 화로 탭하면 즉시 달궈짐 + 힌트 처리
+// 모바일: 화로 탭하면 즉시 달궈짐
 firePit.addEventListener('click', () => {
   if (!isMobile()) return;
   if (settingsModal.classList.contains('open')) return;
@@ -340,7 +334,6 @@ firePit.addEventListener('click', () => {
   heatUp();
   markHintSeen();
 
-  // 살짝 “툭” 피드백
   firePitWrapper.style.transform = 'scale(0.56)';
   setTimeout(() => { firePitWrapper.style.transform = 'scale(0.55)'; }, 120);
 });
@@ -393,7 +386,6 @@ person.addEventListener('click', (e) => {
   const question = questionInput.value.trim();
   if (bubbleTimer) { clearTimeout(bubbleTimer); bubbleTimer = null; }
 
-  // 인두가 안 달궈졌으면 조롱
   if (!isHeated) {
     const mock = coldMockery[Math.floor(Math.random() * coldMockery.length)];
     answerBubble.innerText = mock;
@@ -402,10 +394,8 @@ person.addEventListener('click', (e) => {
     return;
   }
 
-  // 고통 애니메이션
   sinnerGroup.classList.add('pain');
 
-  // 포인터 좌표 확보
   const p = getPointerFromEvent(e) || { clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY };
 
   createSmoke(p.pageX, p.pageY);
@@ -413,18 +403,17 @@ person.addEventListener('click', (e) => {
   answerBubble.style.visibility = 'visible';
   answerBubble.innerText = "으아아악!!!";
 
-  // ✅ “지지면” 인두는 즉시 식는다 + 5초 타이머 중단 + 숫자 숨김
+  // ✅ 지지면 즉시 식힘 + 카운트도 즉시 사라짐
   isHeated = false;
   cursor.classList.remove('heated');
   if (heatTimer) { clearTimeout(heatTimer); heatTimer = null; }
   stopHeatUI();
 
-  // ✅ 떨어진 뒤 화상자국(시간 지나면 사라짐)
+  // ✅ 인두 떨어진 뒤 화상자국
   setTimeout(() => {
     createBurnMark(p.clientX, p.clientY);
   }, 350);
 
-  // 답변 출력
   setTimeout(() => {
     const pick = question
       ? randomAnswers[Math.floor(Math.random() * randomAnswers.length)]
