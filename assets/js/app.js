@@ -85,22 +85,95 @@ const clearBtn = $('.clear-btn');
 // ============================
 const cursor = $('#iron-cursor');
 const firePit = $('#fire-pit-container');
+// ============================
+// 모바일 화로 UX 요소(라벨/배지/펄스) 생성
+// ============================
+const firePitWrapper = firePit.closest('.item-wrapper');
+
+const fireHint = document.createElement('div');
+fireHint.className = 'fire-hint';
+fireHint.textContent = '화로 탭해서 달구기';
+firePitWrapper.appendChild(fireHint);
+
+const heatBadge = document.createElement('div');
+heatBadge.className = 'heat-badge';
+heatBadge.textContent = '달궈짐 15s';
+firePitWrapper.appendChild(heatBadge);
+
+const firePulse = document.createElement('div');
+firePulse.className = 'firepit-pulse';
+firePitWrapper.appendChild(firePulse);
+
+function isMobile() {
+  return window.matchMedia('(max-width: 768px)').matches;
+}
+
+// 힌트는 “처음 접속”에만 보여주고, 한 번 화로를 쓰면 저장 후 숨김
+const HINT_KEY = 'geegle_fire_hint_seen';
+function showFireHintIfNeeded() {
+  if (!isMobile()) return;
+  const seen = localStorage.getItem(HINT_KEY) === '1';
+  if (!seen) fireHint.classList.add('show');
+}
+function markHintSeen() {
+  localStorage.setItem(HINT_KEY, '1');
+  fireHint.classList.remove('show');
+}
+
+showFireHintIfNeeded();
+window.addEventListener('resize', showFireHintIfNeeded);
+
 const person = $('#person-container');
 const answerBubble = $('#answer-bubble');
 const sinnerGroup = $('#sinner-group');
 
 let isHeated = false;
 let heatTimer = null;
+let heatCountdownTimer = null;
+let heatEndsAt = 0;
 let bubbleTimer = null;
 
-// ✅ 15초 뒤 자동으로 식힘
+function stopHeatUI() {
+  heatBadge.classList.remove('show');
+  firePulse.classList.add('on'); // 다시 유도 펄스 ON(모바일에서만 의미)
+  if (heatCountdownTimer) {
+    clearInterval(heatCountdownTimer);
+    heatCountdownTimer = null;
+  }
+}
+
 function startHeatTimer() {
   if (heatTimer) clearTimeout(heatTimer);
+
+  // ✅ 끝나는 시각 기록
+  heatEndsAt = Date.now() + 15000;
+
+  // UI 표시
+  if (isMobile()) {
+    heatBadge.classList.add('show');
+    firePulse.classList.remove('on');
+  }
+
+  // 1초마다 카운트다운 업데이트
+  if (heatCountdownTimer) clearInterval(heatCountdownTimer);
+  heatCountdownTimer = setInterval(() => {
+    const remainMs = Math.max(0, heatEndsAt - Date.now());
+    const remainS = Math.ceil(remainMs / 1000);
+    heatBadge.textContent = `달궈짐 ${remainS}s`;
+    if (remainMs <= 0) {
+      clearInterval(heatCountdownTimer);
+      heatCountdownTimer = null;
+    }
+  }, 250);
+
+  // 15초 지나면 식힘
   heatTimer = setTimeout(() => {
     isHeated = false;
     cursor.classList.remove('heated');
+    stopHeatUI();
   }, 15000);
 }
+
 
 function heatUp() {
   if (!isHeated) {
@@ -201,6 +274,9 @@ function checkHeatCollision(clientX, clientY) {
     clientY <= rect.bottom;
 
   if (inside) heatUp();
+  // 처음엔 “달구기” 유도 펄스 ON
+if (isMobile()) firePulse.classList.add('on');
+
 }
 
 document.addEventListener('mousemove', (e) => {
@@ -229,6 +305,18 @@ document.addEventListener('touchstart', (e) => {
 
 // 화로에 마우스 진입해도 달궈짐(PC)
 firePit.addEventListener('mouseenter', () => { heatUp(); });
+// ✅ 모바일: 화로 탭하면 즉시 달궈짐 (커서 이동 없이도 OK)
+firePit.addEventListener('click', (e) => {
+  if (!isMobile()) return; // PC는 기존 방식 유지
+  if (settingsModal.classList.contains('open')) return;
+
+  heatUp();
+  markHintSeen();
+
+  // 살짝 “툭” 피드백 느낌(시각)
+  firePitWrapper.style.transform = 'scale(0.56)';
+  setTimeout(() => { firePitWrapper.style.transform = 'scale(0.55)'; }, 120);
+});
 
 // ============================
 // 연기 + 화상자국
@@ -304,6 +392,8 @@ person.addEventListener('click', (e) => {
   isHeated = false;
   cursor.classList.remove('heated');
   if (heatTimer) { clearTimeout(heatTimer); heatTimer = null; }
+
+  stopHeatUI();
 
   // ✅ 떨어진 뒤 화상자국 (시간 지나면 사라짐)
   setTimeout(() => {
