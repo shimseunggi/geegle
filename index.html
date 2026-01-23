@@ -1,33 +1,29 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Geegle</title>
 
-  <link rel="apple-touch-icon" href="assets/img/icon.png" />
+  <link rel="apple-touch-icon" href="icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-  <link rel="stylesheet" href="assets/css/style.css" />
-  <script defer src="assets/js/app.js"></script>
+  <link rel="stylesheet" href="./style.css" />
 </head>
-
 <body>
+
   <!-- 설정 버튼 -->
   <div class="settings-btn-container">
-    <button id="btn-open-settings" aria-label="설정 열기">
-      <div class="gear">
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="gear-inner"></div>
-        <div class="gear-hole"></div>
-      </div>
+    <button id="btn-open-settings" aria-label="설정 열기" title="설정">
+      <!-- 구글 느낌의 톱니 (SVG) -->
+      <svg class="gear-ic" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.02 7.02 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.49.41l-.36 2.54c-.58.23-1.13.54-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 7.47a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.83 14.52a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.6.22l2.39-.96c.5.4 1.05.71 1.63.94l.36 2.54c.04.24.25.41.49.41h3.8c.24 0 .45-.17.49-.41l.36-2.54c.58-.23 1.13-.54 1.63-.94l2.39.96c.21.09.47 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5z"/>
+      </svg>
     </button>
   </div>
 
-  <!-- 설정 모달 -->
+  <!-- 상소문 모달 -->
   <div id="settings-modal" class="modal-overlay">
     <div class="modal-scroll">
       <div class="scroll-roller-top"></div>
@@ -55,47 +51,44 @@
 
   <!-- 로고 -->
   <div class="geegle-logo-container">
-    <img src="assets/img/logo.png" alt="지글(Geegle) 로고" class="geegle-logo-img" />
+    <img src="logo.png" alt="지글(Geegle) 로고" class="geegle-logo-img" />
   </div>
 
   <!-- 구글풍 검색 UI -->
   <div class="search-area">
-    <div class="search-box" role="search" aria-label="지글 검색">
-      <span class="search-icon" aria-hidden="true">⌕</span>
-      <input
-        type="text"
-        id="question-input"
-        placeholder="무엇을 알고 싶으냐?"
-        autocomplete="off"
-        spellcheck="false"
-      />
-      <button class="clear-btn" type="button" aria-label="입력 지우기">✕</button>
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input id="question-input" type="text" placeholder="무엇을 알고 싶으냐?" autocomplete="off" />
+      <button class="clear-btn" type="button" aria-label="지우기">✕</button>
     </div>
 
-    <div class="search-actions" aria-label="검색 버튼">
-      <button type="button" class="search-btn" id="btn-geegle-search">지글 검색</button>
-      <button type="button" class="search-btn ghost" id="btn-feeling-lucky">운명에 맡기기</button>
+    <div class="search-actions">
+      <button id="btn-geegle-search" class="search-btn" type="button">지글 검색</button>
+      <button id="btn-feeling-lucky" class="search-btn ghost" type="button">운명에 맡기기</button>
     </div>
   </div>
 
   <!-- 인두 커서 -->
-  <div id="iron-cursor">
+  <div id="iron-cursor" aria-hidden="true">
     <div class="iron-head"></div>
     <div class="iron-rod"></div>
     <div class="iron-handle"></div>
   </div>
 
-  <!-- 메인 인터랙션 영역 -->
+  <!-- 메인 -->
   <div class="layout-row">
     <!-- 화로 -->
     <div class="item-wrapper">
       <div id="fire-pit-container">
         <div class="pot-rim">
           <div class="fire-glow"></div>
-          <div class="coal c1"></div> <div class="coal c2"></div> <div class="coal c3"></div> <div class="coal c4"></div> <div class="coal c5"></div>
-          <div class="coal c6"></div> <div class="coal c7"></div> <div class="coal c8"></div> <div class="coal c9"></div> <div class="coal c10"></div>
-          <div class="coal c11"></div> <div class="coal c12"></div> <div class="coal c13"></div> <div class="coal c14"></div> <div class="coal c15"></div>
+          <div class="coal c1"></div> <div class="coal c2"></div> <div class="coal c3"></div>
+          <div class="coal c4"></div> <div class="coal c5"></div> <div class="coal c6"></div>
+          <div class="coal c7"></div> <div class="coal c8"></div> <div class="coal c9"></div>
+          <div class="coal c10"></div> <div class="coal c11"></div> <div class="coal c12"></div>
+          <div class="coal c13"></div> <div class="coal c14"></div> <div class="coal c15"></div>
         </div>
+        <!-- ✅ 여기 항아리에 data-heat="5" 이런 식으로 숫자가 찍힘 -->
         <div class="earthen-pot"></div>
       </div>
     </div>
@@ -116,7 +109,7 @@
               <div class="eye left"></div><div class="eye right"></div>
             </div>
             <div class="nose"></div>
-            <div class="mouth" id="sinner-mouth"></div>
+            <div class="mouth"></div>
           </div>
 
           <div class="torso">
@@ -137,5 +130,7 @@
       </div>
     </div>
   </div>
+
+  <script src="./script.js" defer></script>
 </body>
 </html>
