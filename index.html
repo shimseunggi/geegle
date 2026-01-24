@@ -61,6 +61,10 @@
       padding-bottom: 40px;
     }
 
+    /* ✅ 입력/버튼 위에서는 기본 커서 유지(UX 개선) */
+    #question-input { cursor: text; }
+    button, .search-btn, .clear-btn { cursor: pointer; }
+
     /* ===== 상단 설정 버튼 ===== */
     .settings-btn-container{
       position: fixed;
@@ -121,81 +125,73 @@
       transition: background-color .35s ease;
     }
 
- /* --- 상소문 모달창 --- */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--overlay-color);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 10000; 
-            opacity: 0; visibility: hidden;
-            transition: opacity 0.3s ease 0.6s, visibility 0.3s 0.6s;
-        }
+    /* --- 상소문 모달창 --- */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--overlay-color);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 10000;
+      opacity: 0; visibility: hidden;
+      transition: opacity 0.3s ease 0.6s, visibility 0.3s 0.6s;
+    }
+    .modal-overlay.open {
+      opacity: 1; visibility: visible;
+      transition: opacity 0.3s ease 0s, visibility 0.3s 0s;
+    }
+    .modal-scroll {
+      width: 340px; max-width: 90%;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .scroll-roller-top, .scroll-roller-bottom {
+      height: 28px; width: 100%;
+      background: repeating-linear-gradient(90deg, #3e2723, #3e2723 2px, #5d4037 2px, #5d4037 10px);
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.6);
+      position: relative; z-index: 10;
+    }
+    .scroll-roller-top::before, .scroll-roller-top::after,
+    .scroll-roller-bottom::before, .scroll-roller-bottom::after {
+      content: ''; position: absolute; width: 18px; height: 38px;
+      background: #281813; border-radius: 6px; top: -5px;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+    }
+    .scroll-roller-top::before, .scroll-roller-bottom::before { left: -12px; }
+    .scroll-roller-top::after, .scroll-roller-bottom::after { right: -12px; }
 
-        .modal-overlay.open {
-            opacity: 1; visibility: visible;
-            transition: opacity 0.3s ease 0s, visibility 0.3s 0s;
-        }
+    .modal-content {
+      background-color: var(--paper-bg);
+      color: var(--paper-text);
+      width: 90%;
+      overflow: hidden;
+      background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 2px, transparent 2px, transparent 4px);
+      box-shadow: inset 0 0 20px rgba(139, 69, 19, 0.2);
+      text-align: center;
+      position: relative; z-index: 1;
 
-        .modal-scroll {
-            width: 340px; max-width: 90%;
-            display: flex; flex-direction: column; align-items: center;
-        }
+      max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0;
+      transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0s,
+                  padding 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0s,
+                  opacity 0.2s ease 0.4s;
+    }
+    .modal-overlay.open .modal-content {
+      max-height: 600px; padding-top: 30px; padding-bottom: 30px;
+      opacity: 1;
+      transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
+                  padding 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
+                  opacity 0.3s ease 0.1s;
+    }
 
-        .scroll-roller-top, .scroll-roller-bottom {
-            height: 28px; width: 100%;
-            background: repeating-linear-gradient(90deg, #3e2723, #3e2723 2px, #5d4037 2px, #5d4037 10px);
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.6);
-            position: relative; z-index: 10;
-        }
-        .scroll-roller-top::before, .scroll-roller-top::after,
-        .scroll-roller-bottom::before, .scroll-roller-bottom::after {
-            content: ''; position: absolute; width: 18px; height: 38px;
-            background: #281813; border-radius: 6px; top: -5px;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
-        }
-        .scroll-roller-top::before, .scroll-roller-bottom::before { left: -12px; }
-        .scroll-roller-top::after, .scroll-roller-bottom::after { right: -12px; }
-
-        .modal-content {
-            background-color: var(--paper-bg);
-            color: var(--paper-text);
-            width: 90%;
-            overflow: hidden; 
-            background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 2px, transparent 2px, transparent 4px);
-            box-shadow: inset 0 0 20px rgba(139, 69, 19, 0.2);
-            text-align: center;
-            position: relative; z-index: 1; 
-
-            max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0;
-            transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0s, 
-                        padding 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0s,
-                        opacity 0.2s ease 0.4s; 
-        }
-
-        .modal-overlay.open .modal-content {
-            max-height: 600px; padding-top: 30px; padding-bottom: 30px;
-            opacity: 1;
-            transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.1s, 
-                        padding 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
-                        opacity 0.3s ease 0.1s;
-        }
-
-        .modal-title {
-            font-size: 26px; font-weight: bold; margin-bottom: 15px;
-            border-bottom: 2px solid var(--paper-text); padding-bottom: 10px;
-            letter-spacing: 5px;
-        }
-
-        .modal-desc {
-            font-size: 15px; margin-bottom: 25px; line-height: 1.6;
-            font-weight: bold; color: #5d4037;
-        }
-
-        .setting-section { margin-bottom: 25px; }
-        .setting-label {
-            font-size: 16px; margin-bottom: 12px; display: block; font-weight: bold;
-        }
+    .modal-title {
+      font-size: 26px; font-weight: bold; margin-bottom: 15px;
+      border-bottom: 2px solid var(--paper-text); padding-bottom: 10px;
+      letter-spacing: 5px;
+    }
+    .modal-desc {
+      font-size: 15px; margin-bottom: 25px; line-height: 1.6;
+      font-weight: bold; color: #5d4037;
+    }
+    .setting-section { margin-bottom: 25px; }
+    .setting-label { font-size: 16px; margin-bottom: 12px; display: block; font-weight: bold; }
 
     .theme-options{
       display:flex;
@@ -457,7 +453,7 @@
       100% { opacity: 0.80; transform: scale(0.98); }
     }
 
-    /* ✅ 항아리(화로)에 숫자 카운트 "그래픽"처럼 표시 */
+    /* 항아리 카운트 */
     .heat-count{
       position: absolute;
       left: 22px;
@@ -473,7 +469,6 @@
       font-size: 22px;
       letter-spacing: 1px;
 
-      /* 그을린 스탬프 느낌 */
       color: rgba(255, 210, 160, 0.92);
       background: radial-gradient(circle at 35% 30%, rgba(255,120,60,0.35), rgba(60,10,0,0.55));
       border: 1px solid rgba(255,160,90,0.25);
@@ -502,19 +497,22 @@
 
     /* ===== 인두 커서 ===== */
     #iron-cursor{
-      position:absolute;
+      position: fixed; /* ✅ viewport 기준 */
       pointer-events:none;
       width:200px;
       height:40px;
       z-index:9999;
-      transform-origin:left center;
-      transform: translate(0px, -20px) rotate(30deg);
-      display:flex;
-      align-items:center;
-      filter: drop-shadow(5px 5px 5px rgba(0,0,0,0.25));
       left:0;
       top:0;
       visibility:hidden;
+
+      /* ✅ transform 기반 이동(성능) */
+      transform-origin:left center;
+      transform: translate3d(var(--cx, 0px), var(--cy, 0px), 0) translate(-10px, -30px) rotate(30deg);
+      will-change: transform;
+      display:flex;
+      align-items:center;
+      filter: drop-shadow(5px 5px 5px rgba(0,0,0,0.25));
     }
     .iron-head{ width:60px; height:45px; background:#444; clip-path: polygon(0 50%, 100% 0, 100% 100%); transition: background .35s ease; }
     .iron-rod{ width:100px; height:8px; background:#333; margin-left:-1px; transition: background .35s ease; }
@@ -669,7 +667,7 @@
       box-shadow: inset 0 -6px 0 #d15c5c;
     }
 
-    /* 말풍선 (진짜 말풍선처럼 꼬리 포함) */
+    /* 말풍선 */
     #answer-bubble{
       visibility:hidden;
       position:absolute;
@@ -720,7 +718,7 @@
       100%{ opacity: 0; transform: translate(-50%, -180px) scale(2.5) rotate(20deg); background: rgba(255,255,255,0); }
     }
 
-    /* 화상자국: 일정 시간 후 사라짐 */
+    /* 화상자국 */
     .burn-mark{
       position:absolute;
       width:60px; height:45px;
@@ -749,6 +747,7 @@
     body.settings-active #iron-cursor{ display:none !important; }
     body.settings-active button,
     body.settings-active input{ cursor: pointer; }
+    body.settings-active #question-input{ cursor: text; }
 
     /* ===== 반응형(모바일) ===== */
     @media (max-width: 768px){
@@ -760,7 +759,6 @@
         align-items: center;
         gap: 18px;
       }
-      /* 화로를 하단 고정(스크롤 없이 달구기) */
       .layout-row > .item-wrapper:first-child{
         position: fixed;
         left: 12px;
@@ -843,7 +841,6 @@
   <div class="layout-row">
     <div class="item-wrapper">
       <div id="fire-pit-container" aria-label="화로">
-        <!-- ✅ 화로에 숫자 카운트 표시(달궈질 때만 show) -->
         <div id="heat-count" class="heat-count" aria-hidden="true">5</div>
 
         <div class="pot-rim">
@@ -899,9 +896,21 @@
     // ============================
     function $(sel) { return document.querySelector(sel); }
     function getPointerFromEvent(e) {
-      if (typeof e.clientX === 'number') return { clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY };
+      if (typeof e.clientX === 'number') {
+        return {
+          clientX: e.clientX,
+          clientY: e.clientY,
+          pageX: e.pageX,
+          pageY: e.pageY
+        };
+      }
       const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
-      if (t) return { clientX: t.clientX, clientY: t.clientY, pageX: t.pageX, pageY: t.pageY };
+      if (t) {
+        // touch는 pageX/pageY가 제공되는 경우가 많지만, 안전하게 보정
+        const pageX = (typeof t.pageX === 'number') ? t.pageX : (t.clientX + window.scrollX);
+        const pageY = (typeof t.pageY === 'number') ? t.pageY : (t.clientY + window.scrollY);
+        return { clientX: t.clientX, clientY: t.clientY, pageX, pageY };
+      }
       return null;
     }
     function isMobile() { return window.matchMedia('(max-width: 768px)').matches; }
@@ -986,7 +995,6 @@
     const answerBubble = $('#answer-bubble');
     const sinnerGroup = $('#sinner-group');
 
-    // ✅ 15초 → 5초
     const HEAT_DURATION_MS = 5000;
 
     let isHeated = false;
@@ -1012,20 +1020,17 @@
       isHeated = false;
       cursor.classList.remove('heated');
       stopHeatTimers();
-      hideHeatCount(); // ✅ 달궈진 상태 아니면 카운트 숨김
+      hideHeatCount();
     }
 
     function startHeatTimer() {
       stopHeatTimers();
       heatEndsAt = Date.now() + HEAT_DURATION_MS;
-
-      // 즉시 5 표시
       showHeatCount(5);
 
-      // 100ms 단위로 갱신해서 “5→4→3→2→1”이 확실히 보이게
       heatCountdownTimer = setInterval(() => {
         const remainMs = Math.max(0, heatEndsAt - Date.now());
-        const remainS = Math.ceil(remainMs / 1000); // 5..1..0
+        const remainS = Math.ceil(remainMs / 1000);
         if (remainS <= 0) {
           coolDown();
         } else {
@@ -1088,7 +1093,6 @@
       if (bubbleTimer) clearTimeout(bubbleTimer);
       bubbleTimer = setTimeout(() => { answerBubble.style.visibility = 'hidden'; }, 2400);
 
-      // 모바일에서 죄인으로 스크롤 유도
       if (isMobile()) person.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
@@ -1112,50 +1116,83 @@
     });
 
     // ============================
-    // 커서 이동 + 화로 충돌 체크
+    // ✅ 커서 이동 + 충돌체크 리팩토링
+    // - 이벤트마다 rect 계산 X
+    // - requestAnimationFrame 루프에서 이동/충돌 처리
     // ============================
-    function moveIron(pageX, pageY) {
+    let fireRect = null;
+    function updateFireRect() {
+      fireRect = firePit.getBoundingClientRect();
+    }
+    updateFireRect();
+    window.addEventListener('resize', updateFireRect, { passive: true });
+    window.addEventListener('scroll', updateFireRect, { passive: true });
+    window.addEventListener('orientationchange', () => setTimeout(updateFireRect, 50), { passive: true });
+
+    const pointer = {
+      active: false,
+      clientX: 0,
+      clientY: 0,
+      pageX: 0,
+      pageY: 0,
+      dirty: false
+    };
+
+    function setCursorPos(clientX, clientY) {
+      // CSS 변수로 transform 이동
+      cursor.style.setProperty('--cx', clientX + 'px');
+      cursor.style.setProperty('--cy', clientY + 'px');
       if (cursor.style.visibility !== 'visible') cursor.style.visibility = 'visible';
-      cursor.style.left = (pageX - 10) + 'px';
-      cursor.style.top  = (pageY - 10) + 'px';
     }
 
-    function checkHeatCollision(clientX, clientY) {
-      const rect = firePit.getBoundingClientRect();
-      const inside =
-        clientX >= rect.left &&
-        clientX <= rect.right &&
-        clientY >= rect.top &&
-        clientY <= rect.bottom;
-
-      if (inside) heatUp();
+    function isInsideFire(clientX, clientY) {
+      if (!fireRect) return false;
+      return (
+        clientX >= fireRect.left &&
+        clientX <= fireRect.right &&
+        clientY >= fireRect.top &&
+        clientY <= fireRect.bottom
+      );
     }
 
-    document.addEventListener('mousemove', (e) => {
-      if (document.body.classList.contains('settings-active')) return;
-      moveIron(e.pageX, e.pageY);
-      checkHeatCollision(e.clientX, e.clientY);
-    });
+    function rafLoop() {
+      if (!document.body.classList.contains('settings-active') && pointer.dirty) {
+        pointer.dirty = false;
 
-    document.addEventListener('touchmove', (e) => {
+        setCursorPos(pointer.clientX, pointer.clientY);
+
+        if (isInsideFire(pointer.clientX, pointer.clientY)) {
+          heatUp();
+        }
+      }
+      requestAnimationFrame(rafLoop);
+    }
+    requestAnimationFrame(rafLoop);
+
+    function onPointerMove(e) {
       if (document.body.classList.contains('settings-active')) return;
-      if (e.target.closest('#question-input') || e.target.closest('.modal-scroll')) return;
+
+      // 입력/모달 터치 이동은 무시(기존 의도 유지)
+      if (e.type.startsWith('touch')) {
+        if (e.target.closest('#question-input') || e.target.closest('.modal-scroll')) return;
+      }
+
       const p = getPointerFromEvent(e);
       if (!p) return;
-      moveIron(p.pageX, p.pageY);
-      checkHeatCollision(p.clientX, p.clientY);
-    }, { passive: true });
 
-    document.addEventListener('touchstart', (e) => {
-      if (document.body.classList.contains('settings-active')) return;
-      if (e.target.closest('#question-input') || e.target.closest('.modal-scroll')) return;
-      const p = getPointerFromEvent(e);
-      if (!p) return;
-      moveIron(p.pageX, p.pageY);
-      checkHeatCollision(p.clientX, p.clientY);
-    }, { passive: true });
+      pointer.active = true;
+      pointer.clientX = p.clientX;
+      pointer.clientY = p.clientY;
+      pointer.pageX = p.pageX;
+      pointer.pageY = p.pageY;
+      pointer.dirty = true;
+    }
 
-    // PC: hover로도 달궈짐
+    document.addEventListener('mousemove', onPointerMove, { passive: true });
+    document.addEventListener('touchmove', onPointerMove, { passive: true });
+    document.addEventListener('touchstart', onPointerMove, { passive: true });
+
+    // PC: hover로도 달궈짐(기존 유지)
     firePit.addEventListener('mouseenter', () => heatUp());
     // 모바일: 탭하면 달궈짐
     firePit.addEventListener('click', () => {
@@ -1223,17 +1260,22 @@
 
       sinnerGroup.classList.add('pain');
 
-      const p = getPointerFromEvent(e) || { clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY };
+      // 클릭 이벤트는 mouse만 들어오므로 client/page 둘 다 구성
+      const p = getPointerFromEvent(e) || {
+        clientX: e.clientX,
+        clientY: e.clientY,
+        pageX: e.clientX + window.scrollX,
+        pageY: e.clientY + window.scrollY
+      };
 
       createSmoke(p.pageX, p.pageY);
 
       answerBubble.style.visibility = 'visible';
       answerBubble.innerText = "으아아악!!!";
 
-      // ✅ 지지면 즉시 식음 + 숫자도 즉시 사라짐
+      // 지지면 즉시 식음 + 숫자도 즉시 사라짐
       coolDown();
 
-      // ✅ 떨어진 뒤 화상자국
       setTimeout(() => {
         createBurnMark(p.clientX, p.clientY);
       }, 280);
@@ -1250,6 +1292,13 @@
           bubbleTimer = setTimeout(() => { answerBubble.style.visibility = 'hidden'; }, 3200);
         }, 450);
       }, 520);
+    });
+
+    // ============================
+    // 초기 rect 갱신(폰트/이미지 로딩 후 레이아웃 변동 대비)
+    // ============================
+    window.addEventListener('load', () => {
+      updateFireRect();
     });
   </script>
 </body>
