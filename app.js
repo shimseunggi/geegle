@@ -78,7 +78,19 @@ function closeAbout(){
   syncOverlayState();
 }
 
-btnGeegleFooter.addEventListener('click', openAbout);
+// footer '지글' 버튼 클릭 시 열 사이트 (원하는 URL로 바꿔주세요)
+const GEEGLE_FOOTER_URL = 'https://github.com/shimseunggi/geegle/'; // ✅ 여기만 원하는 사이트로 수정
+
+if (btnGeegleFooter) {
+  btnGeegleFooter.addEventListener('click', () => {
+    // ✅ 새 탭으로 열기 (가장 안전 / 사이트 임베드 제한 없음)
+    window.open(GEEGLE_FOOTER_URL, '_blank', 'noopener,noreferrer');
+
+    // ✅ 같은 탭으로 이동하고 싶으면 위 줄 대신 이 줄 사용:
+    // window.location.href = GEEGLE_FOOTER_URL;
+  });
+}
+
 aboutCancel.addEventListener('click', closeAbout);
 aboutSave.addEventListener('click', () => {
   localStorage.setItem(ABOUT_KEY, aboutText.value.trim());
@@ -139,15 +151,25 @@ clearBtn.addEventListener('click', () => {
 // 게임 로직
 // ============================
 const cursor = $('#iron-cursor');
+
+const brandIron = $('#brand-iron');
+
+function setBrandHeat(on) {
+  if (!brandIron) return;
+  brandIron.classList.toggle('heated', !!on);
+}
+
+
 const firePit = $('#fire-pit-container');
 
 // ✅ 입력 포커스 중 인두 커서 숨김(구글 검색창 UX)
 questionInput.addEventListener('focus', () => document.body.classList.add('input-active'));
 questionInput.addEventListener('blur',  () => document.body.classList.remove('input-active'));
 
-// ✅ 5~1 눈금
+// ✅ 항아리 카운트(5→1) : 숫자 1개만 표시
 const heatGauge = $('#heat-gauge');
-const heatGaugeItems = heatGauge ? Array.from(heatGauge.querySelectorAll('span')) : [];
+const heatGaugeNum = $('#heat-gauge-num');
+let lastGaugeSec = null;
 
 const person = $('#person-container');
 const answerBubble = $('#answer-bubble');
@@ -164,15 +186,32 @@ let bubbleTimer = null;
 function showHeatGauge(remainSec) {
   if (!heatGauge) return;
   heatGauge.classList.add('show');
-  heatGaugeItems.forEach(el => {
-    el.classList.toggle('active', Number(el.dataset.v) === remainSec);
-  });
+  if (!heatGaugeNum) return;
+
+// ✅ 100ms 루프에서 매번 튀지 않게, "초"가 바뀔 때만 갱신
+  if (lastGaugeSec !== remainSec) {
+    lastGaugeSec = remainSec;
+    heatGaugeNum.textContent = String(remainSec);
+
+    heatGaugeNum.classList.remove('bump');
+    // reflow 트릭: 같은 클래스 재적용 시 애니메이션 재생
+    void heatGaugeNum.offsetWidth;
+    heatGaugeNum.classList.add('bump');
+  }
+}
+
+// ✅ Google-ish progress bar용(1 → 0)
+function setHeatProgress(remainMs) {
+  if (!heatGauge) return;
+  const p = Math.max(0, Math.min(1, remainMs / HEAT_DURATION_MS));
+  heatGauge.style.setProperty('--heat-progress', String(p));
 }
 
 function hideHeatGauge() {
   if (!heatGauge) return;
   heatGauge.classList.remove('show');
-  heatGaugeItems.forEach(el => el.classList.remove('active'));
+  lastGaugeSec = null;
+  heatGauge.style.removeProperty('--heat-progress');
 }
 
 function stopHeatTimers() {
@@ -183,6 +222,7 @@ function stopHeatTimers() {
 function coolDown() {
   isHeated = false;
   cursor.classList.remove('heated');
+  setBrandHeat(false);        // ✅ 추가
   stopHeatTimers();
   hideHeatGauge();
 }
@@ -192,10 +232,12 @@ function startHeatTimer() {
   stopHeatTimers();
   heatEndsAt = Date.now() + HEAT_DURATION_MS;
   showHeatGauge(5);
+  setHeatProgress(HEAT_DURATION_MS);
 
   heatCountdownTimer = setInterval(() => {
     const remainMs = Math.max(0, heatEndsAt - Date.now());
     const remainS = Math.ceil(remainMs / 1000);
+    setHeatProgress(remainMs);
     if (remainS <= 0) coolDown();
     else showHeatGauge(remainS);
   }, 100);
@@ -209,6 +251,7 @@ function holdHeatOnFire() {
     isHeated = true;
     cursor.classList.add('heated');
   }
+  setBrandHeat(true);         // ✅ 추가 (카운트 중에도 계속 뜨거운 상태 유지)
   stopHeatTimers();
   hideHeatGauge();
 }
@@ -265,11 +308,12 @@ btnGeegleSearch.addEventListener('click', () => {
 btnFeelingLucky.addEventListener('click', () => {
   if (!questionInput.value.trim()) {
     const lucky = ["오늘의 운세", "범인은 누구인가", "전하의 뜻", "관아의 비밀", "저잣거리 소문"];
-    questionInput.value = lucky[Math.floor(Math.random() * lucky[Math.floor(Math.random() * lucky.length)].length)];
+    questionInput.value = lucky[Math.floor(Math.random() * lucky.length)];
   }
   questionInput.blur();
   promptToInterrogate();
 });
+
 questionInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     e.preventDefault();
@@ -358,6 +402,7 @@ firePit.addEventListener('click', () => {
   if (settingsModal.classList.contains('open') || aboutOverlay.classList.contains('open')) return;
   isHeated = true;
   cursor.classList.add('heated');
+  setBrandHeat(true);         // ✅ 추가
   startHeatTimer();
 });
 
