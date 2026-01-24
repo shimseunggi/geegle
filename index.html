@@ -10,60 +10,93 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
   <style>
-    :root {
-      --bg-color: #f5f5f5;
+    :root{
+      /* ===== Google-ish tokens ===== */
+      --bg-color: #ffffff;
       --text-color: #202124;
-      --input-bg: #fff;
-      --bubble-bg: #fff;
-      --bubble-text: #111;
+      --muted-text: #5f6368;
 
+      --surface: #ffffff;
+      --border: #dfe1e5;
+      --border-hover: #dadce0;
+
+      --shadow-1: 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-2: 0 1px 6px rgba(32,33,36,0.28);
+
+      --btn-bg: #f8f9fa;
+      --btn-border: #f8f9fa;
+      --btn-text: #3c4043;
+      --btn-hover-border: #dadce0;
+      --btn-hover-shadow: 0 1px 1px rgba(0,0,0,0.10);
+
+      /* Joseon modal tokens */
       --paper-bg: #e8dcb5;
       --paper-text: #3e2723;
       --paper-border: #5d4037;
 
-      /* 구글 느낌 기어(회색) */
       --gear-solid-color: #5f6368;
 
-      --logo-filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));
       --overlay-color: rgba(0, 0, 0, 0.55);
+      --logo-filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));
     }
 
-    [data-theme="dark"] {
-      --bg-color: #121212;
+    [data-theme="dark"]{
+      --bg-color: #202124;
       --text-color: #e8eaed;
-      --input-bg: #1f1f1f;
-      --bubble-bg: #1f1f1f;
-      --bubble-text: #f1f3f4;
+      --muted-text: #bdc1c6;
+
+      --surface: #303134;
+      --border: rgba(255,255,255,0.18);
+      --border-hover: rgba(255,255,255,0.26);
+
+      --shadow-1: 0 1px 2px rgba(0,0,0,0.35);
+      --shadow-2: 0 1px 10px rgba(0,0,0,0.55);
+
+      --btn-bg: #303134;
+      --btn-border: #303134;
+      --btn-text: #e8eaed;
+      --btn-hover-border: rgba(255,255,255,0.20);
+      --btn-hover-shadow: 0 1px 1px rgba(0,0,0,0.30);
 
       --paper-bg: #cbb995;
       --gear-solid-color: #b0b4b9;
 
+      --overlay-color: rgba(0,0,0,0.78);
       --logo-filter: drop-shadow(0 0 6px rgba(255,255,255,0.12));
-      --overlay-color: rgba(0, 0, 0, 0.78);
     }
 
     * { box-sizing: border-box; }
 
     body{
-      margin: 0;
-      min-height: 100vh;
-      background-color: var(--bg-color);
+      margin:0;
+      min-height:100vh;
+      background: var(--bg-color);
       color: var(--text-color);
-      cursor: none;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      font-family: 'Gungsuh', serif;
-      overflow-x: hidden;
+      cursor: none; /* 커스텀 인두 커서 */
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+
+      /* ✅ Google 느낌의 기본 폰트(조선 감성은 일부 요소만 궁서로) */
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", Arial, sans-serif;
+
+      overflow-x:hidden;
       touch-action: pan-y;
       -webkit-overflow-scrolling: touch;
-      transition: background-color .35s ease, color .35s ease;
+      transition: background-color .25s ease, color .25s ease;
       padding-bottom: 40px;
     }
 
-    /* ✅ 입력/버튼 위에서는 기본 커서 유지(UX 개선) */
+    /* ✅ 입력/버튼 위에서는 기본 커서 유지 */
     #question-input { cursor: text; }
     button, .search-btn, .clear-btn { cursor: pointer; }
+
+    /* ✅ 접근성: 키보드 포커스 */
+    :focus-visible{
+      outline: 3px solid rgba(26,115,232,0.55);
+      outline-offset: 2px;
+      border-radius: 10px;
+    }
 
     /* ===== 상단 설정 버튼 ===== */
     .settings-btn-container{
@@ -79,13 +112,12 @@
       padding: 0;
       width: 42px;
       height: 42px;
-      cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      transition: transform .25s ease;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      transition: transform .18s ease;
     }
-    #btn-open-settings:hover { transform: rotate(25deg); }
+    #btn-open-settings:hover { transform: rotate(18deg); }
 
     .gear{
       position: relative;
@@ -94,7 +126,7 @@
       display:flex;
       justify-content:center;
       align-items:center;
-      opacity: .95;
+      opacity: .92;
     }
     .bar{
       position:absolute;
@@ -122,27 +154,27 @@
       background-color: var(--bg-color);
       border-radius: 50%;
       z-index: 20;
-      transition: background-color .35s ease;
+      transition: background-color .25s ease;
     }
 
-    /* --- 상소문 모달창 --- */
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    /* --- 상소문 모달 --- */
+    .modal-overlay{
+      position: fixed; inset: 0;
       background: var(--overlay-color);
-      display: flex; justify-content: center; align-items: center;
+      display:flex; justify-content:center; align-items:center;
       z-index: 10000;
       opacity: 0; visibility: hidden;
-      transition: opacity 0.3s ease 0.6s, visibility 0.3s 0.6s;
+      transition: opacity .25s ease .5s, visibility .25s .5s;
     }
-    .modal-overlay.open {
+    .modal-overlay.open{
       opacity: 1; visibility: visible;
-      transition: opacity 0.3s ease 0s, visibility 0.3s 0s;
+      transition: opacity .25s ease 0s, visibility .25s 0s;
     }
-    .modal-scroll {
+    .modal-scroll{
       width: 340px; max-width: 90%;
-      display: flex; flex-direction: column; align-items: center;
+      display:flex; flex-direction:column; align-items:center;
     }
-    .scroll-roller-top, .scroll-roller-bottom {
+    .scroll-roller-top, .scroll-roller-bottom{
       height: 28px; width: 100%;
       background: repeating-linear-gradient(90deg, #3e2723, #3e2723 2px, #5d4037 2px, #5d4037 10px);
       border-radius: 12px;
@@ -150,48 +182,50 @@
       position: relative; z-index: 10;
     }
     .scroll-roller-top::before, .scroll-roller-top::after,
-    .scroll-roller-bottom::before, .scroll-roller-bottom::after {
-      content: ''; position: absolute; width: 18px; height: 38px;
-      background: #281813; border-radius: 6px; top: -5px;
+    .scroll-roller-bottom::before, .scroll-roller-bottom::after{
+      content: ''; position:absolute; width:18px; height:38px;
+      background:#281813; border-radius:6px; top:-5px;
       box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
     }
-    .scroll-roller-top::before, .scroll-roller-bottom::before { left: -12px; }
-    .scroll-roller-top::after, .scroll-roller-bottom::after { right: -12px; }
+    .scroll-roller-top::before, .scroll-roller-bottom::before{ left:-12px; }
+    .scroll-roller-top::after,  .scroll-roller-bottom::after{ right:-12px; }
 
-    .modal-content {
+    .modal-content{
       background-color: var(--paper-bg);
       color: var(--paper-text);
       width: 90%;
       overflow: hidden;
       background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 2px, transparent 2px, transparent 4px);
       box-shadow: inset 0 0 20px rgba(139, 69, 19, 0.2);
-      text-align: center;
+      text-align:center;
       position: relative; z-index: 1;
 
-      max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0;
-      transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0s,
-                  padding 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0s,
-                  opacity 0.2s ease 0.4s;
-    }
-    .modal-overlay.open .modal-content {
-      max-height: 600px; padding-top: 30px; padding-bottom: 30px;
-      opacity: 1;
-      transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
-                  padding 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
-                  opacity 0.3s ease 0.1s;
-    }
+      /* ✅ 궁서 유지 */
+      font-family: 'Gungsuh', serif;
 
-    .modal-title {
-      font-size: 26px; font-weight: bold; margin-bottom: 15px;
+      max-height:0; padding-top:0; padding-bottom:0; opacity:0;
+      transition: max-height .55s cubic-bezier(0.4,0,0.2,1) 0s,
+                  padding .55s cubic-bezier(0.4,0,0.2,1) 0s,
+                  opacity .18s ease .35s;
+    }
+    .modal-overlay.open .modal-content{
+      max-height: 600px; padding-top:30px; padding-bottom:30px;
+      opacity:1;
+      transition: max-height .55s cubic-bezier(0.4,0,0.2,1) .08s,
+                  padding .55s cubic-bezier(0.4,0,0.2,1) .08s,
+                  opacity .25s ease .08s;
+    }
+    .modal-title{
+      font-size: 26px; font-weight: 900; margin-bottom: 12px;
       border-bottom: 2px solid var(--paper-text); padding-bottom: 10px;
       letter-spacing: 5px;
     }
-    .modal-desc {
-      font-size: 15px; margin-bottom: 25px; line-height: 1.6;
-      font-weight: bold; color: #5d4037;
+    .modal-desc{
+      font-size: 15px; margin-bottom: 22px; line-height: 1.6;
+      font-weight: 800; color: #5d4037;
     }
-    .setting-section { margin-bottom: 25px; }
-    .setting-label { font-size: 16px; margin-bottom: 12px; display: block; font-weight: bold; }
+    .setting-section{ margin-bottom: 25px; }
+    .setting-label{ font-size: 16px; margin-bottom: 12px; display:block; font-weight: 900; }
 
     .theme-options{
       display:flex;
@@ -207,7 +241,7 @@
       border-radius: 10px;
       cursor:pointer;
       font-size: 14px;
-      font-weight: 800;
+      font-weight: 900;
       transition: transform .12s ease, background .12s ease;
     }
     .theme-btn:hover{ background: rgba(0,0,0,0.05); transform: translateY(-1px); }
@@ -227,8 +261,8 @@
       cursor:pointer;
       font-family:'Gungsuh';
       font-size: 15px;
-      font-weight: 800;
-      opacity: .75;
+      font-weight: 900;
+      opacity: .8;
       transition: opacity .2s ease;
       color: var(--paper-text);
     }
@@ -249,68 +283,72 @@
       height: auto;
       display:block;
       filter: var(--logo-filter);
+      user-select:none;
+      -webkit-user-drag: none;
     }
 
-    /* ===== 구글풍 검색 영역 ===== */
+    /* ===== 검색 영역 (Google 느낌 강화) ===== */
     .search-area{
       width: min(680px, 92vw);
       display:flex;
       flex-direction:column;
       align-items:center;
-      gap: 16px;
+      gap: 18px;
       z-index: 20;
       margin-bottom: 26px;
     }
 
     .search-box{
-      width: 100%;
+      width: min(584px, 92vw);
       display:flex;
       align-items:center;
       gap: 10px;
-      padding: 14px 16px;
-      background: var(--input-bg);
-      border: 1px solid rgba(60,64,67,0.22);
+      padding: 12px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: 999px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.10);
+      box-shadow: var(--shadow-1);
       transition: box-shadow .15s ease, border-color .15s ease;
     }
-    [data-theme="dark"] .search-box{
-      border-color: rgba(255,255,255,0.15);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.35);
-    }
     .search-box:hover{
-      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
-      border-color: rgba(60,64,67,0.32);
+      box-shadow: var(--shadow-2);
+      border-color: transparent; /* Google처럼 hover 시 경계가 덜 보이게 */
     }
-    [data-theme="dark"] .search-box:hover{
-      box-shadow: 0 5px 18px rgba(0,0,0,0.55);
-      border-color: rgba(255,255,255,0.22);
+    .search-box:focus-within{
+      box-shadow: var(--shadow-2);
+      border-color: transparent;
     }
 
     .search-icon{
-      font-size: 18px;
-      opacity: .70;
+      width: 18px; height: 18px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
       user-select:none;
-      line-height: 1;
+      opacity: .78;
+      color: var(--muted-text);
+      flex: 0 0 auto;
     }
+    .search-icon svg{ width: 18px; height: 18px; }
 
     #question-input{
       flex: 1;
-      border: none;
-      outline: none;
-      background: transparent;
+      border:none;
+      outline:none;
+      background:transparent;
       color: var(--text-color);
-      font-family:'Gungsuh', serif;
-      font-size: 18px;
+      font-family: inherit;
+      font-size: 16px;
       min-width: 0;
+      padding: 2px 0;
     }
-    #question-input::placeholder{ opacity: .55; }
+    #question-input::placeholder{ color: var(--muted-text); opacity: .75; }
 
     .clear-btn{
-      border: none;
-      background: transparent;
-      color: var(--text-color);
-      opacity: .55;
+      border:none;
+      background:transparent;
+      color: var(--muted-text);
+      opacity: .7;
       cursor:pointer;
       font-size: 18px;
       padding: 6px 10px;
@@ -319,7 +357,7 @@
     }
     .clear-btn:hover{
       background: rgba(60,64,67,0.10);
-      opacity: .9;
+      opacity: 1;
     }
     [data-theme="dark"] .clear-btn:hover{
       background: rgba(255,255,255,0.10);
@@ -332,29 +370,22 @@
       justify-content:center;
     }
     .search-btn{
-      font-family:'Gungsuh', serif;
+      font-family: inherit;
       font-size: 14px;
-      font-weight: 800;
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px solid rgba(60,64,67,0.18);
-      background: rgba(60,64,67,0.06);
-      color: var(--text-color);
+      font-weight: 500;
+      padding: 10px 16px;
+      border-radius: 4px; /* Google 버튼은 둥글긴 해도 pill은 아님 */
+      border: 1px solid var(--btn-border);
+      background: var(--btn-bg);
+      color: var(--btn-text);
       cursor:pointer;
-      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
-    }
-    [data-theme="dark"] .search-btn{
-      border-color: rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.06);
+      transition: box-shadow .12s ease, border-color .12s ease, transform .12s ease;
     }
     .search-btn:hover{
-      transform: translateY(-1px);
-      box-shadow: 0 3px 12px rgba(0,0,0,0.12);
+      border-color: var(--btn-hover-border);
+      box-shadow: var(--btn-hover-shadow);
     }
-    .search-btn:active{
-      transform: translateY(0);
-      box-shadow: none;
-    }
+    .search-btn:active{ transform: translateY(1px); }
 
     /* ===== 메인 레이아웃 ===== */
     .layout-row{
@@ -464,10 +495,11 @@
       display:flex;
       justify-content:center;
       align-items:center;
+
+      /* ✅ 조선 느낌 유지 */
       font-family: 'Gungsuh', serif;
       font-weight: 900;
       font-size: 22px;
-      letter-spacing: 1px;
 
       color: rgba(255, 210, 160, 0.92);
       background: radial-gradient(circle at 35% 30%, rgba(255,120,60,0.35), rgba(60,10,0,0.55));
@@ -497,7 +529,7 @@
 
     /* ===== 인두 커서 ===== */
     #iron-cursor{
-      position: fixed; /* ✅ viewport 기준 */
+      position: fixed;
       pointer-events:none;
       width:200px;
       height:40px;
@@ -506,7 +538,6 @@
       top:0;
       visibility:hidden;
 
-      /* ✅ transform 기반 이동(성능) */
       transform-origin:left center;
       transform: translate3d(var(--cx, 0px), var(--cy, 0px), 0) translate(-10px, -30px) rotate(30deg);
       will-change: transform;
@@ -514,8 +545,8 @@
       align-items:center;
       filter: drop-shadow(5px 5px 5px rgba(0,0,0,0.25));
     }
-    .iron-head{ width:60px; height:45px; background:#444; clip-path: polygon(0 50%, 100% 0, 100% 100%); transition: background .35s ease; }
-    .iron-rod{ width:100px; height:8px; background:#333; margin-left:-1px; transition: background .35s ease; }
+    .iron-head{ width:60px; height:45px; background:#444; clip-path: polygon(0 50%, 100% 0, 100% 100%); transition: background .25s ease; }
+    .iron-rod{ width:100px; height:8px; background:#333; margin-left:-1px; transition: background .25s ease; }
     .iron-handle{ width:80px; height:28px; background:#8b4513; border-radius:5px 20px 20px 5px; box-shadow: inset 0 -5px 10px rgba(0,0,0,0.45); border-left: 5px solid #222; }
 
     #iron-cursor.heated .iron-head{ background:#ff2400; filter: drop-shadow(0 0 12px #ff4500); }
@@ -667,7 +698,7 @@
       box-shadow: inset 0 -6px 0 #d15c5c;
     }
 
-    /* 말풍선 */
+    /* 말풍선(조선 느낌 유지) */
     #answer-bubble{
       visibility:hidden;
       position:absolute;
@@ -677,28 +708,31 @@
       width: min(260px, 70vw);
       max-height: 170px;
       padding: 14px 16px;
-      background: var(--bubble-bg);
-      color: var(--bubble-text);
+      background: var(--surface);
+      color: var(--text-color);
       border-radius: 18px;
-      border: 2px solid rgba(60,64,67,0.35);
-      box-shadow: 0 10px 24px rgba(0,0,0,0.15);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-2);
+
       font-size: 15px;
       font-weight: 900;
       line-height: 1.45;
       text-align: center;
       z-index: 100;
       pointer-events:none;
+
+      font-family: 'Gungsuh', serif;
     }
     #answer-bubble::after{
       content:'';
       position:absolute;
       left: 50%;
-      bottom: -10px;
+      bottom: -9px;
       width: 16px;
       height: 16px;
-      background: var(--bubble-bg);
-      border-right: 2px solid rgba(60,64,67,0.35);
-      border-bottom: 2px solid rgba(60,64,67,0.35);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
       transform: translateX(-50%) rotate(45deg);
       box-shadow: 6px 6px 14px rgba(0,0,0,0.06);
     }
@@ -749,7 +783,12 @@
     body.settings-active input{ cursor: pointer; }
     body.settings-active #question-input{ cursor: text; }
 
-    /* ===== 반응형(모바일) ===== */
+    /* 모션 줄이기 선호 */
+    @media (prefers-reduced-motion: reduce){
+      *{ animation: none !important; transition: none !important; }
+    }
+
+    /* ===== 모바일 ===== */
     @media (max-width: 768px){
       body{ padding-bottom: 140px; }
       .geegle-logo-container{ margin-top: 7vh; }
@@ -818,8 +857,15 @@
 
   <!-- 검색 UI -->
   <div class="search-area">
-    <div class="search-box" role="search">
-      <span class="search-icon" aria-hidden="true">🔍</span>
+    <div class="search-box" role="search" aria-label="지글 검색">
+      <span class="search-icon" aria-hidden="true">
+        <!-- Google 스타일 돋보기(SVG) -->
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="2"/>
+          <path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </span>
+
       <input id="question-input" type="text" placeholder="무엇을 알고 싶으냐?" autocomplete="off" />
       <button class="clear-btn" type="button" aria-label="입력 지우기">✕</button>
     </div>
@@ -897,16 +943,10 @@
     function $(sel) { return document.querySelector(sel); }
     function getPointerFromEvent(e) {
       if (typeof e.clientX === 'number') {
-        return {
-          clientX: e.clientX,
-          clientY: e.clientY,
-          pageX: e.pageX,
-          pageY: e.pageY
-        };
+        return { clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY };
       }
       const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
       if (t) {
-        // touch는 pageX/pageY가 제공되는 경우가 많지만, 안전하게 보정
         const pageX = (typeof t.pageX === 'number') ? t.pageX : (t.clientX + window.scrollX);
         const pageY = (typeof t.pageY === 'number') ? t.pageY : (t.clientY + window.scrollY);
         return { clientX: t.clientX, clientY: t.clientY, pageX, pageY };
@@ -1007,9 +1047,7 @@
       heatCount.textContent = String(remainSec);
       heatCount.classList.add('show');
     }
-    function hideHeatCount() {
-      heatCount.classList.remove('show');
-    }
+    function hideHeatCount() { heatCount.classList.remove('show'); }
 
     function stopHeatTimers() {
       if (heatTimer) { clearTimeout(heatTimer); heatTimer = null; }
@@ -1031,16 +1069,11 @@
       heatCountdownTimer = setInterval(() => {
         const remainMs = Math.max(0, heatEndsAt - Date.now());
         const remainS = Math.ceil(remainMs / 1000);
-        if (remainS <= 0) {
-          coolDown();
-        } else {
-          showHeatCount(remainS);
-        }
+        if (remainS <= 0) coolDown();
+        else showHeatCount(remainS);
       }, 100);
 
-      heatTimer = setTimeout(() => {
-        coolDown();
-      }, HEAT_DURATION_MS);
+      heatTimer = setTimeout(() => { coolDown(); }, HEAT_DURATION_MS);
     }
 
     function heatUp() {
@@ -1116,30 +1149,18 @@
     });
 
     // ============================
-    // ✅ 커서 이동 + 충돌체크 리팩토링
-    // - 이벤트마다 rect 계산 X
-    // - requestAnimationFrame 루프에서 이동/충돌 처리
+    // 커서 이동 + 충돌체크(raf)
     // ============================
     let fireRect = null;
-    function updateFireRect() {
-      fireRect = firePit.getBoundingClientRect();
-    }
+    function updateFireRect() { fireRect = firePit.getBoundingClientRect(); }
     updateFireRect();
     window.addEventListener('resize', updateFireRect, { passive: true });
     window.addEventListener('scroll', updateFireRect, { passive: true });
     window.addEventListener('orientationchange', () => setTimeout(updateFireRect, 50), { passive: true });
 
-    const pointer = {
-      active: false,
-      clientX: 0,
-      clientY: 0,
-      pageX: 0,
-      pageY: 0,
-      dirty: false
-    };
+    const pointer = { active:false, clientX:0, clientY:0, pageX:0, pageY:0, dirty:false };
 
     function setCursorPos(clientX, clientY) {
-      // CSS 변수로 transform 이동
       cursor.style.setProperty('--cx', clientX + 'px');
       cursor.style.setProperty('--cy', clientY + 'px');
       if (cursor.style.visibility !== 'visible') cursor.style.visibility = 'visible';
@@ -1147,23 +1168,14 @@
 
     function isInsideFire(clientX, clientY) {
       if (!fireRect) return false;
-      return (
-        clientX >= fireRect.left &&
-        clientX <= fireRect.right &&
-        clientY >= fireRect.top &&
-        clientY <= fireRect.bottom
-      );
+      return clientX >= fireRect.left && clientX <= fireRect.right && clientY >= fireRect.top && clientY <= fireRect.bottom;
     }
 
     function rafLoop() {
       if (!document.body.classList.contains('settings-active') && pointer.dirty) {
         pointer.dirty = false;
-
         setCursorPos(pointer.clientX, pointer.clientY);
-
-        if (isInsideFire(pointer.clientX, pointer.clientY)) {
-          heatUp();
-        }
+        if (isInsideFire(pointer.clientX, pointer.clientY)) heatUp();
       }
       requestAnimationFrame(rafLoop);
     }
@@ -1172,7 +1184,6 @@
     function onPointerMove(e) {
       if (document.body.classList.contains('settings-active')) return;
 
-      // 입력/모달 터치 이동은 무시(기존 의도 유지)
       if (e.type.startsWith('touch')) {
         if (e.target.closest('#question-input') || e.target.closest('.modal-scroll')) return;
       }
@@ -1192,9 +1203,7 @@
     document.addEventListener('touchmove', onPointerMove, { passive: true });
     document.addEventListener('touchstart', onPointerMove, { passive: true });
 
-    // PC: hover로도 달궈짐(기존 유지)
     firePit.addEventListener('mouseenter', () => heatUp());
-    // 모바일: 탭하면 달궈짐
     firePit.addEventListener('click', () => {
       if (!isMobile()) return;
       if (settingsModal.classList.contains('open')) return;
@@ -1260,7 +1269,6 @@
 
       sinnerGroup.classList.add('pain');
 
-      // 클릭 이벤트는 mouse만 들어오므로 client/page 둘 다 구성
       const p = getPointerFromEvent(e) || {
         clientX: e.clientX,
         clientY: e.clientY,
@@ -1273,12 +1281,9 @@
       answerBubble.style.visibility = 'visible';
       answerBubble.innerText = "으아아악!!!";
 
-      // 지지면 즉시 식음 + 숫자도 즉시 사라짐
       coolDown();
 
-      setTimeout(() => {
-        createBurnMark(p.clientX, p.clientY);
-      }, 280);
+      setTimeout(() => { createBurnMark(p.clientX, p.clientY); }, 280);
 
       setTimeout(() => {
         const pick = question
@@ -1294,12 +1299,7 @@
       }, 520);
     });
 
-    // ============================
-    // 초기 rect 갱신(폰트/이미지 로딩 후 레이아웃 변동 대비)
-    // ============================
-    window.addEventListener('load', () => {
-      updateFireRect();
-    });
+    window.addEventListener('load', () => { updateFireRect(); });
   </script>
 </body>
 </html>
