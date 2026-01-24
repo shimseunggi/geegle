@@ -10,6 +10,48 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
   <style>
+  
+  /* ===== Geegle SVG 로고(구글 워드마크 느낌) ===== */
+.geegle-brand{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap: 10px;
+  filter: var(--logo-filter);
+  user-select:none;
+  -webkit-user-drag:none;
+}
+
+.geegle-logo{
+  width: min(272px, 84vw);
+  height: auto;
+  display:block;
+}
+
+/* 핵심: 폰트/굵기/자간(커닝) + 렌더링 품질 */
+.geegle-logo-text{
+  font-family: "Product Sans", "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 72px;          /* 272x92 기준으로 구글 로고 느낌 크기 */
+  font-weight: 600;         /* 너무 두껍지 않게 */
+  letter-spacing: -1.6px;   /* 구글식 타이트 커닝 */
+  paint-order: stroke;
+  stroke: transparent;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 로고 아래 한글 라벨 */
+.geegle-korean{
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.18em;   /* 구글 서브텍스트처럼 살짝 벌림 */
+  color: var(--muted-text);
+  opacity: .92;
+  line-height: 1;
+}
+
+  
     :root{
       /* ===== Google-ish tokens ===== */
       --bg-color: #ffffff;
@@ -38,6 +80,13 @@
 
       --overlay-color: rgba(0, 0, 0, 0.55);
       --logo-filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));
+
+      /* ✅ footer tokens */
+      --footer-bg: #f2f2f2;
+      --footer-border: #dadce0;
+      --footer-text: #70757a;
+      --footer-hover: rgba(60,64,67,0.08);
+      --footer-safe: 56px;
     }
 
     [data-theme="dark"]{
@@ -63,6 +112,12 @@
 
       --overlay-color: rgba(0,0,0,0.78);
       --logo-filter: drop-shadow(0 0 6px rgba(255,255,255,0.12));
+
+      /* ✅ footer dark */
+      --footer-bg: #171717;
+      --footer-border: rgba(255,255,255,0.14);
+      --footer-text: #9aa0a6;
+      --footer-hover: rgba(232,234,237,0.10);
     }
 
     * { box-sizing: border-box; }
@@ -84,7 +139,9 @@
       touch-action: pan-y;
       -webkit-overflow-scrolling: touch;
       transition: background-color .25s ease, color .25s ease;
-      padding-bottom: 40px;
+
+      /* ✅ footer safe */
+      padding-bottom: calc(40px + var(--footer-safe));
     }
 
     /* 입력/버튼 위에서는 기본 커서 유지 */
@@ -256,26 +313,71 @@
     }
     #btn-close-settings:hover{ opacity: 1; }
 
-    /* ===== 로고 ===== */
-    .geegle-logo-container{
-      margin-top: 12vh;
-      margin-bottom: 18px;
-      width: 100%;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      z-index: 10;
-    }
-    .geegle-logo-img{
-      width: min(420px, 84vw);
-      height: auto;
-      display:block;
-      filter: var(--logo-filter);
-      user-select:none;
-      -webkit-user-drag: none;
-    }
+/* ===== 로고(구글 홈 크기/여백 느낌) ===== */
+.geegle-logo-container{
+  /* 구글 홈처럼 위쪽 여백이 화면 높이에 비례 */
+  margin-top: clamp(72px, 14vh, 150px);
+  margin-bottom: 18px;
+  width: 100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index: 10;
+}
 
-    /* ===== 검색 영역 ===== */
+.geegle-logo-stack{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap: 12px; /* 로고-한글 간격 */
+}
+
+/* ✅ 구글 메인 로고 기본 폭(272px) + 반응형 */
+.geegle-logo-svg{
+  width: clamp(200px, 38vw, 272px); /* 모바일~데스크톱 */
+  height: auto;
+  display:block;
+  filter: none;            /* 로고는 그림자/필터 X */
+  user-select:none;
+  -webkit-user-drag:none;
+}
+
+    
+/* ===== 로고(구글 홈 크기/여백 느낌) ===== */
+/* 로고 스택 */
+.geegle-logo-container{
+  margin-top: 14vh;
+  margin-bottom: 18px;
+  width: 100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.geegle-logo-stack{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap: 12px;
+}
+
+/* ✅ 데스크톱: 구글 로고 원본 렌더 폭 */
+.geegle-logo-svg{
+  width: 272px;
+  height: auto;
+  max-width: 100%;
+  display:block;
+  filter: none;
+}
+
+/* ✅ 모바일: 구글처럼 한 단계 작게 */
+@media (max-width: 768px){
+  .geegle-logo-svg{
+    width: 200px;
+  }
+}
+
+/* ===== 검색 영역 ===== */
     .search-area{
       width: min(680px, 92vw);
       display:flex;
@@ -775,9 +877,112 @@
       *{ animation: none !important; transition: none !important; }
     }
 
+    /* ===== ✅ Google footer (대한민국 줄 자리) ===== */
+    .g-footer{
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 9000;
+      background: var(--footer-bg);
+      border-top: 1px solid var(--footer-border);
+    }
+    .g-footer-country{
+      padding: 14px 30px;
+      font-size: 15px;
+      line-height: 1;
+      color: var(--footer-text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", Arial, sans-serif;
+    }
+    .g-footer-country .g-footer-link{
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      padding: 6px 8px;
+      margin: -6px -8px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .g-footer-country .g-footer-link:hover{
+      background: var(--footer-hover);
+    }
+    .g-footer-country .g-footer-link:active{
+      background: rgba(60,64,67,0.14);
+    }
+    [data-theme="dark"] .g-footer-country .g-footer-link:active{
+      background: rgba(232,234,237,0.18);
+    }
+
+    /* ===== ✅ '지글 설명' 모달 ===== */
+    .about-overlay{
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 12500; /* settings(12000) 위 */
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .18s ease, visibility .18s ease;
+    }
+    .about-overlay.open{
+      opacity: 1;
+      visibility: visible;
+    }
+    .about-card{
+      width: min(520px, 92vw);
+      background: var(--surface);
+      color: var(--text-color);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow-2);
+      padding: 18px;
+    }
+    .about-title{
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .about-textarea{
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 12px 12px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text-color);
+      background: transparent;
+      outline: none;
+    }
+    .about-textarea:focus{
+      border-color: transparent;
+      box-shadow: 0 0 0 3px rgba(26,115,232,0.25);
+    }
+    .about-actions{
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .about-btn{
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--btn-hover-border);
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      cursor: pointer;
+    }
+    .about-btn:hover{ box-shadow: var(--btn-hover-shadow); }
+
     /* ===== 모바일 ===== */
     @media (max-width: 768px){
-      body{ padding-bottom: 140px; }
+      /* ✅ footer safe */
+      body{ padding-bottom: calc(140px + var(--footer-safe)); }
       .geegle-logo-container{ margin-top: 7vh; }
       #question-input{ font-size: 16px; }
       .layout-row{
@@ -788,7 +993,7 @@
       .layout-row > .item-wrapper:first-child{
         position: fixed;
         left: 12px;
-        bottom: 12px;
+        bottom: calc(12px + var(--footer-safe)); /* ✅ footer 위로 */
         z-index: 9990;
         transform: scale(0.58);
         transform-origin: left bottom;
@@ -833,9 +1038,33 @@
     </div>
   </div>
 
-  <!-- 로고 -->
+  <!-- 로고 (✅ 태그 정리: 닫힘 오류 수정) -->
   <div class="geegle-logo-container">
-    <img src="logo.png" alt="지글(Geegle) 로고" class="geegle-logo-img" />
+    <div class="geegle-logo-stack" aria-label="지글(Geegle) 로고">
+      <svg class="geegle-logo-svg" aria-label="Geegle" role="img" viewBox="0 0 272 92" xmlns="http://www.w3.org/2000/svg">
+        <!-- G (파랑) -->
+        <path d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.89.36 34.91.36 15.93 16.32.47 35.3.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z" fill="#4285F4"/>
+
+        <!-- e (빨강) -->
+        <g transform="translate(-156 0)">
+          <path d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z" fill="#EA4335"/>
+        </g>
+
+        <!-- e (노랑) -->
+        <g transform="translate(-108 0)">
+          <path d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z" fill="#FBBC05"/>
+        </g>
+
+        <!-- g (파랑) -->
+        <path d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z" fill="#4285F4"/>
+
+        <!-- l (초록) -->
+        <path d="M225 3v65h-9.5V3h9.5z" fill="#34A853"/>
+
+        <!-- e (빨강) -->
+        <path d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z" fill="#EA4335"/>
+      </svg>
+    </div>
   </div>
 
   <!-- 검색 UI -->
@@ -918,6 +1147,27 @@
     </div>
   </div>
 
+  <!-- ✅ 구글 footer: '대한민국' 줄 자리 => 지글(클릭) -->
+  <footer class="g-footer" aria-label="하단 정보">
+    <div class="g-footer-country">
+      <button id="btn-geegle-footer" class="g-footer-link" type="button" aria-label="지글 설명 편집 열기">
+        지글
+      </button>
+    </div>
+  </footer>
+
+  <!-- ✅ '지글 설명' 편집 모달 -->
+  <div id="about-overlay" class="about-overlay" aria-hidden="true">
+    <div class="about-card" role="dialog" aria-modal="true" aria-label="지글 설명 편집">
+      <div class="about-title">지글 설명</div>
+      <textarea id="about-text" class="about-textarea" placeholder="지글이 무엇인지 한 줄(또는 여러 줄)로 적어주세요."></textarea>
+      <div class="about-actions">
+        <button id="about-cancel" class="about-btn" type="button">닫기</button>
+        <button id="about-save" class="about-btn" type="button">저장</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ============================
     // 공통 유틸
@@ -944,22 +1194,78 @@
     const btnCloseSettings = $('#btn-close-settings');
     const settingsModal = $('#settings-modal');
 
+    // ✅ footer '지글' + 설명 모달
+    const aboutOverlay = $('#about-overlay');
+    const btnGeegleFooter = $('#btn-geegle-footer');
+    const aboutText = $('#about-text');
+    const aboutCancel = $('#about-cancel');
+    const aboutSave = $('#about-save');
+    const ABOUT_KEY = 'geegle_about_text';
+
+    // ✅ settings-active 동기화 (설정/설명 중 하나라도 열리면 true)
+    function syncOverlayState(){
+      const anyOpen =
+        (settingsModal && settingsModal.classList.contains('open')) ||
+        (aboutOverlay && aboutOverlay.classList.contains('open'));
+      document.body.classList.toggle('settings-active', !!anyOpen);
+    }
+
     btnOpenSettings.addEventListener('click', () => {
       settingsModal.classList.add('open');
-      document.body.classList.add('settings-active');
+      settingsModal.setAttribute('aria-hidden', 'false');
+      // 설명 모달이 열려 있으면 닫고 설정 열기
+      if (aboutOverlay.classList.contains('open')) {
+        aboutOverlay.classList.remove('open');
+        aboutOverlay.setAttribute('aria-hidden', 'true');
+      }
+      syncOverlayState();
     });
 
     function closeModal() {
       settingsModal.classList.remove('open');
+      settingsModal.setAttribute('aria-hidden', 'true');
       setTimeout(() => {
-        if (!settingsModal.classList.contains('open')) {
-          document.body.classList.remove('settings-active');
-        }
+        syncOverlayState();
       }, 200);
     }
     btnCloseSettings.addEventListener('click', closeModal);
     settingsModal.addEventListener('click', (e) => {
       if (e.target === settingsModal) closeModal();
+    });
+
+    // ✅ 지글 설명 모달 열기/닫기
+    function openAbout(){
+      // 설정 모달이 열려있으면 닫고 시작(겹침 방지)
+      if (settingsModal.classList.contains('open')) {
+        settingsModal.classList.remove('open');
+        settingsModal.setAttribute('aria-hidden', 'true');
+      }
+      aboutOverlay.classList.add('open');
+      aboutOverlay.setAttribute('aria-hidden', 'false');
+
+      const saved = localStorage.getItem(ABOUT_KEY) || '';
+      aboutText.value = saved;
+
+      syncOverlayState();
+      setTimeout(() => aboutText.focus(), 0);
+    }
+    function closeAbout(){
+      aboutOverlay.classList.remove('open');
+      aboutOverlay.setAttribute('aria-hidden', 'true');
+      syncOverlayState();
+    }
+
+    btnGeegleFooter.addEventListener('click', openAbout);
+    aboutCancel.addEventListener('click', closeAbout);
+    aboutSave.addEventListener('click', () => {
+      localStorage.setItem(ABOUT_KEY, aboutText.value.trim());
+      closeAbout();
+    });
+    aboutOverlay.addEventListener('click', (e) => {
+      if (e.target === aboutOverlay) closeAbout();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && aboutOverlay.classList.contains('open')) closeAbout();
     });
 
     // ============================
@@ -1167,7 +1473,7 @@
       if (document.body.classList.contains('settings-active')) return;
 
       if (e.type.startsWith('touch')) {
-        if (e.target.closest('#question-input') || e.target.closest('.modal-scroll')) return;
+        if (e.target.closest('#question-input') || e.target.closest('.modal-scroll') || e.target.closest('.about-card')) return;
       }
 
       const p = getPointerFromEvent(e);
@@ -1188,7 +1494,7 @@
     firePit.addEventListener('mouseenter', () => heatUp());
     firePit.addEventListener('click', () => {
       if (!isMobile()) return;
-      if (settingsModal.classList.contains('open')) return;
+      if (settingsModal.classList.contains('open') || aboutOverlay.classList.contains('open')) return;
       heatUp();
     });
 
@@ -1232,7 +1538,7 @@
     // 죄인 클릭(지지기)
     // ============================
     person.addEventListener('click', (e) => {
-      if (settingsModal.classList.contains('open')) return;
+      if (settingsModal.classList.contains('open') || aboutOverlay.classList.contains('open')) return;
 
       const targetPart = e.target.closest('.head, .torso, .thigh');
       if (!targetPart) return;
