@@ -37,4 +37,4 @@
 * **Google Fonts**: 'Gungsuh'(궁서체)와 'Poppins'를 사용하여 레트로와 모던의 조화
 
 ---
-Developed by shimseunggi with Gemini pro
+Developed by shimseunggi with Gemini pro, chatGPT, Codex
