@@ -1,7 +1,6 @@
-<img src = "https://github.com/user-attachments/assets/64d0a903-91b2-4dbb-a34a-2bfc9a35813d" width="50%" height="height size%">
-
-
 # 🔥 지글 (Geegle) - 인류 역사상 최고의 검색 엔진
+
+<p align="center"><img src = "https://github.com/user-attachments/assets/64d0a903-91b2-4dbb-a34a-2bfc9a35813d" width="50%" height="height size%">
 
 지글(Geegle)은 구글(Google)을 패러디한 조선시대 고문 컨셉의 인터랙티브 웹사이트입니다.
 마우스 커서가 '인두'로 바뀌며, 숯불에 달궈 죄인을 심문하여 답을 얻어내는 독특한 경험을 제공합니다.
