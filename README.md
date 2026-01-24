@@ -1,5 +1,4 @@
-# 위 프로젝트는 인터넷 커뮤니티 게시글에서 아이디어를 받아 제작되었습니다.
-![729f7ab42c229](https://github.com/user-attachments/assets/43e6990e-8bab-49e2-87af-6777d09450fc)
+<img src = "https://github.com/user-attachments/assets/64d0a903-91b2-4dbb-a34a-2bfc9a35813d" width="50%" height="height size%">
 
 
 # 🔥 지글 (Geegle) - 인류 역사상 최고의 검색 엔진
