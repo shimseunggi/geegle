@@ -15,6 +15,7 @@
 
 ```
 /geegle
+ ├─ README.md
  ├─ index.html
  ├─ style.css
  ├─ app.js
