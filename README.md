@@ -19,7 +19,8 @@
  ├─ index.html
  ├─ style.css
  ├─ app.js
- └─ icon.png
+ ├─ icon.png
+ └─ bookmark.png
 ```
 
 ### 1. 🖱️ 커스텀 인두 커서
