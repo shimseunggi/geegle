@@ -31,10 +31,184 @@ const aboutCancel = $('#about-cancel');
 const aboutSave = $('#about-save');
 const ABOUT_KEY = 'geegle_about_text';
 
+// 사용법(10초) 튜토리얼 모달
+const tutorialOverlay = $('#tutorial-overlay');
+const tutorialSpotlight = $('#tutorial-spotlight');
+const tutorialCloseBtn = $('#tutorial-close');
+const tutorialNextBtn = $('#tutorial-next');
+const tutorialPrevBtn = $('#tutorial-prev');
+const tutorialSkipBtn = $('#tutorial-skip');
+const tutorialStepLabel = $('#tutorial-step-label');
+const tutorialStepTitle = $('#tutorial-step-title');
+const tutorialStepDesc = $('#tutorial-step-desc');
+const tutorialDots = Array.from(document.querySelectorAll('.tutorial-dots .dot'));
+
+const TUTORIAL_STEPS = [
+  {
+    title: "하문을 적으시오",
+    desc: "검색창에 질문을 적고 “지글 검색”을 누르시오.",
+    target: "#question-input"
+  },
+  {
+    title: "인두를 달구시오",
+    desc: "커서를 화로(숯불) 위에 올리면 인두가 달아오르옵니다.",
+    target: "#fire-pit-container"
+  },
+  {
+    title: "5초 안에 지지시오",
+    desc: "화로에서 떼면 5초 제한이 생기오니, 죄인을 지져 답을 얻으시옵소서.",
+    target: "#person-container"
+  }
+];
+
+let tutorialStep = 0;
+let tutorialAutoTimers = [];
+let tutorialManual = false;
+
+function clearTutorialAutoTimers(){
+  tutorialAutoTimers.forEach(t => clearTimeout(t));
+  tutorialAutoTimers = [];
+}
+
+function positionTutorialSpotlight(){
+  if (!tutorialOverlay || !tutorialSpotlight) return;
+  if (!tutorialOverlay.classList.contains('open')) return;
+
+  const step = TUTORIAL_STEPS[tutorialStep];
+  const el = step && step.target ? document.querySelector(step.target) : null;
+
+  if (!el) {
+    tutorialSpotlight.classList.add('hide');
+    return;
+  }
+
+  const r = el.getBoundingClientRect();
+  const pad = 10;
+
+  const left = Math.max(8, r.left - pad);
+  const top  = Math.max(8, r.top  - pad);
+
+  const width  = Math.min(window.innerWidth  - left - 8, r.width  + pad * 2);
+  const height = Math.min(window.innerHeight - top  - 8, r.height + pad * 2);
+
+  tutorialSpotlight.classList.remove('hide');
+  tutorialSpotlight.style.left = left + "px";
+  tutorialSpotlight.style.top = top + "px";
+  tutorialSpotlight.style.width = width + "px";
+  tutorialSpotlight.style.height = height + "px";
+}
+
+function renderTutorial(){
+  if (!tutorialOverlay) return;
+  const step = TUTORIAL_STEPS[tutorialStep];
+  if (!step) return;
+
+  if (tutorialStepTitle) tutorialStepTitle.textContent = step.title;
+  if (tutorialStepDesc) tutorialStepDesc.textContent = step.desc;
+  if (tutorialStepLabel) tutorialStepLabel.textContent = `${tutorialStep + 1} / ${TUTORIAL_STEPS.length}`;
+
+  if (tutorialDots && tutorialDots.length) {
+    tutorialDots.forEach((d, i) => d.classList.toggle('active', i === tutorialStep));
+  }
+
+  if (tutorialPrevBtn) {
+    const disabled = (tutorialStep === 0);
+    tutorialPrevBtn.disabled = disabled;
+    tutorialPrevBtn.style.opacity = disabled ? "0.55" : "1";
+  }
+
+  if (tutorialNextBtn) {
+    tutorialNextBtn.textContent = (tutorialStep === TUTORIAL_STEPS.length - 1) ? "시작하기" : "다음";
+  }
+
+  // 화면 중앙에 타겟이 오도록 스크롤 (특히 모바일)
+  const el = step.target ? document.querySelector(step.target) : null;
+  if (el) {
+    try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch {}
+    setTimeout(positionTutorialSpotlight, 220);
+  } else {
+    positionTutorialSpotlight();
+  }
+}
+
+function openTutorial(){
+  if (!tutorialOverlay) return;
+
+  // 다른 모달이 열려 있으면 닫기
+  if (settingsModal && settingsModal.classList.contains('open')) {
+    settingsModal.classList.remove('open');
+    settingsModal.setAttribute('aria-hidden', 'true');
+  }
+  if (aboutOverlay && aboutOverlay.classList.contains('open')) {
+    aboutOverlay.classList.remove('open');
+    aboutOverlay.setAttribute('aria-hidden', 'true');
+  }
+
+  tutorialManual = false;
+  tutorialStep = 0;
+
+  tutorialOverlay.classList.add('open');
+  tutorialOverlay.setAttribute('aria-hidden', 'false');
+  syncOverlayState();
+
+  renderTutorial();
+  clearTutorialAutoTimers();
+
+  // 10초 자동 진행(3초/3초/4초). 사용자가 클릭하면 자동은 멈춤.
+  tutorialAutoTimers.push(setTimeout(() => { if (!tutorialManual) { tutorialStep = 1; renderTutorial(); } }, 3000));
+  tutorialAutoTimers.push(setTimeout(() => { if (!tutorialManual) { tutorialStep = 2; renderTutorial(); } }, 6000));
+  tutorialAutoTimers.push(setTimeout(() => { if (!tutorialManual) closeTutorial(); }, 10000));
+
+  // 위치 보정
+  window.addEventListener('resize', positionTutorialSpotlight);
+  window.addEventListener('scroll', positionTutorialSpotlight);
+}
+
+function closeTutorial(){
+  if (!tutorialOverlay) return;
+  clearTutorialAutoTimers();
+
+  tutorialOverlay.classList.remove('open');
+  tutorialOverlay.setAttribute('aria-hidden', 'true');
+  syncOverlayState();
+
+  if (tutorialSpotlight) tutorialSpotlight.classList.add('hide');
+
+  window.removeEventListener('resize', positionTutorialSpotlight);
+  window.removeEventListener('scroll', positionTutorialSpotlight);
+}
+
+// 튜토리얼 UI 이벤트
+if (tutorialOverlay) {
+  tutorialOverlay.addEventListener('click', (e) => {
+    if (e.target === tutorialOverlay) closeTutorial();
+  });
+}
+if (tutorialCloseBtn) tutorialCloseBtn.addEventListener('click', closeTutorial);
+if (tutorialSkipBtn) tutorialSkipBtn.addEventListener('click', () => { tutorialManual = true; closeTutorial(); });
+
+if (tutorialPrevBtn) tutorialPrevBtn.addEventListener('click', () => {
+  tutorialManual = true;
+  clearTutorialAutoTimers();
+  tutorialStep = Math.max(0, tutorialStep - 1);
+  renderTutorial();
+});
+if (tutorialNextBtn) tutorialNextBtn.addEventListener('click', () => {
+  tutorialManual = true;
+  clearTutorialAutoTimers();
+  if (tutorialStep >= TUTORIAL_STEPS.length - 1) closeTutorial();
+  else {
+    tutorialStep = Math.min(TUTORIAL_STEPS.length - 1, tutorialStep + 1);
+    renderTutorial();
+  }
+});
+
+
 function syncOverlayState(){
   const anyOpen =
     (settingsModal && settingsModal.classList.contains('open')) ||
-    (aboutOverlay && aboutOverlay.classList.contains('open'));
+    (aboutOverlay && aboutOverlay.classList.contains('open')) ||
+    (tutorialOverlay && tutorialOverlay.classList.contains('open'));
   document.body.classList.toggle('settings-active', !!anyOpen);
 }
 
@@ -100,7 +274,10 @@ aboutOverlay.addEventListener('click', (e) => {
   if (e.target === aboutOverlay) closeAbout();
 });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && aboutOverlay.classList.contains('open')) closeAbout();
+  if (e.key !== 'Escape') return;
+  if (tutorialOverlay && tutorialOverlay.classList.contains('open')) { closeTutorial(); return; }
+  if (aboutOverlay && aboutOverlay.classList.contains('open')) closeAbout();
+  if (settingsModal && settingsModal.classList.contains('open')) closeModal();
 });
 
 // ============================
@@ -708,12 +885,8 @@ btnGeegleSearch.addEventListener('click', () => {
   promptToInterrogate();
 });
 btnFeelingLucky.addEventListener('click', () => {
-  if (!questionInput.value.trim()) {
-    const lucky = ["오늘의 운세", "범인은 누구인가", "전하의 뜻", "관아의 비밀", "저잣거리 소문"];
-    questionInput.value = lucky[Math.floor(Math.random() * lucky.length)];
-  }
   questionInput.blur();
-  promptToInterrogate();
+  openTutorial();
 });
 
 questionInput.addEventListener('keydown', (e) => {
