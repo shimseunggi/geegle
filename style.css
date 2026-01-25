@@ -756,6 +756,34 @@ body.input-active #iron-cursor{ display:none !important; }
   box-shadow: 6px 6px 14px rgba(0,0,0,0.06);
 }
 
+/* ✅ B버전: 답변 근거 링크(검색) 칩 */
+.answer-links{
+  display:none;
+  width: min(300px, 82vw);
+  margin-top: 10px;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  z-index: 101;
+}
+.answer-links.show{ display:flex; }
+.answer-links a{
+  pointer-events:auto;
+  text-decoration:none;
+  font-family: 'Gungsuh', serif;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-color);
+  box-shadow: var(--shadow-1);
+}
+.answer-links a:hover{ filter: brightness(0.98); }
+.answer-links a:active{ transform: translateY(1px); }
+
+
 /* 연기 */
 .smoke-particle{
   position:absolute;
@@ -1099,4 +1127,3 @@ body.settings-active #question-input{ cursor: text; }
 @media (max-width: 360px){
   .brand-iron{ --brand-scale: 0.58; }
 }
-
