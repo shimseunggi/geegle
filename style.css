@@ -267,7 +267,7 @@ body.input-active #iron-cursor{ display:none !important; }
   display:block;
   user-select:none;
   -webkit-user-drag:none;
-  filter: none;
+  filter: var(--logo-filter); /* if not work, var(--logo-filter) -> none */
 }
 
 .geegle-logo-container,
@@ -1496,4 +1496,9 @@ body.settings-active #question-input{ cursor: text; }
 
 [data-theme="dark"] .tut-btn-primary:hover{
   background: rgba(138,180,248,1);
+}
+
+/* 다크모드: 지글 로고를 흰색으로 */
+[data-theme="dark"] .geegle-logo-svg path{
+  fill: #ffffff !important;
 }
