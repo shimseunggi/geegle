@@ -16,6 +16,9 @@ function getPointerFromEvent(e) {
 }
 function isMobile() { return window.matchMedia('(max-width: 768px)').matches; }
 
+
+
+
 // ============================
 // 설정 모달
 // ============================
@@ -37,6 +40,29 @@ function syncOverlayState(){
     (aboutOverlay && aboutOverlay.classList.contains('open'));
   document.body.classList.toggle('settings-active', !!anyOpen);
 }
+
+function pickOne(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function geegleOneLinerAnswer(q) {
+  const t = String(q || '').trim();
+
+  if (/(날씨|weather|비|눈|맑|흐리|춥|덥)/i.test(t)) {
+    return pickOne([
+      "오늘 날씨는 좋습니다요.",
+      "오늘은 대체로 맑사옵니다요.",
+      "바람이 좀 있사오나 무리는 없사옵니다요.",
+      "비가 올 듯하니 우산을 챙기시옵소서."
+    ]);
+  }
+
+  return pickOne([
+    "옳사옵니다요.",
+    "그리 하시옵소서요.",
+    "무리 없사옵니다요.",
+    "그렇사옵니다요."
+  ]);
+}
+
 
 btnOpenSettings.addEventListener('click', () => {
   settingsModal.classList.add('open');
@@ -173,6 +199,7 @@ let lastGaugeSec = null;
 
 const person = $('#person-container');
 const answerBubble = $('#answer-bubble');
+const answerLinks = $('#answer-links');
 const sinnerGroup = $('#sinner-group');
 
 const HEAT_DURATION_MS = 5000;
@@ -256,18 +283,151 @@ function holdHeatOnFire() {
   hideHeatGauge();
 }
 
-const randomAnswers = [
-  "으악!! 제.. 제가 그랬습니다요!!",
-  "억울합니다!! 저잣거리 김씨가 범인이라니까요!",
-  "그건.. 옆집 개똥이가 알지도 모릅니다.. 으윽!",
-  "아이고 나 죽네!! 살려만 주시면 다 불겠습니다!!",
-  "사실.. 제가 곶감 하나 훔쳐 먹긴 했습니다..!!",
-  "그건 관아에 가서 물어보셔야지요! 아악!",
-  "뜨거워!! 제발 그 인두 좀 치워주십시오!!",
-  "저는 그저 시키는 대로 했을 뿐입니다요! ㅠㅠ",
-  "배가 고파서 정신이.. 으아악!!",
-  "기억이 날 듯 말 듯 합니다... 한 번만 봐주십시오!"
+// ✅ B버전: API 없이(=로컬 룰 기반) ‘엘리자’ 느낌의 “요약→즉답→근거(검색 링크)”
+// - 정확한 수치/최신정보는 단정하지 않고, 대신 “어디서 확인할지”를 명확히 안내
+// - 말투는 조선시대 문답(나으리/전하/아뢰옵니다) 컨셉
+
+const fallbackAnswers = [
+  "소인, 이 일은 대개 ‘조건’에 따라 갈리옵니다.",
+  "하문하신 바는 알겠사오나, 확답은 ‘공식 기록’이 더 정확하옵니다.",
+  "한 줄로 말하자면: 핵심 기준 1~2개만 잡으면 풀리옵니다.",
+  "정리해 아뢰면, 먼저 ‘정의/범위’를 확정하고 그다음 ‘절차’를 따르시면 되옵니다."
 ];
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function normalizeQuestion(q) {
+  return String(q || '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function extractTopic(q) {
+  const s = normalizeQuestion(q).replace(/[?？!！.]/g, ' ').trim();
+  if (!s) return '';
+  const m = s.match(/(.+?)(의미|뜻|정의|뭐야|무슨|어떤|왜|어떻게|방법|차이|비교|추천|가능|되나|될까)/);
+  const t = (m && m[1] ? m[1] : s).trim();
+  return t.length > 24 ? (t.slice(0, 24) + '…') : t;
+}
+
+function detectType(q) {
+  const s = normalizeQuestion(q);
+  if (!s) return 'empty';
+  if (/(정의|뜻|의미|무슨 뜻|무슨 의미|뭐야|무엇)/.test(s)) return 'definition';
+  if (/(어떻게|방법|하는 법|절차|순서|설치|세팅|설정|구성)/.test(s)) return 'howto';
+  if (/(차이|비교|vs|중에|중 뭐가|어느 게|어떤 게 더)/i.test(s)) return 'compare';
+  if (/(추천|고를까|선택|뭐가 좋아|뭐가 나아)/.test(s)) return 'recommend';
+  if (/(가능|되나|될까|할 수|해도 돼)/.test(s)) return 'feasibility';
+  if (/(왜|이유|원인|때문)/.test(s)) return 'why';
+  if (/(몇|얼마|수치|칼로리|kcal|가격|비용|원|g|그램|kg|cm|%|퍼센트)/i.test(s)) return 'number';
+  return 'general';
+}
+
+function isTimeOrFactSensitive(q) {
+  const s = normalizeQuestion(q);
+  return /(오늘|지금|현재|최신|요즘|이번|최근|방금|내일|어제|올해|작년|내년|\b20\d{2}\b)/.test(s);
+}
+
+function buildSearchLinks(q) {
+  const raw = normalizeQuestion(q);
+  const base = encodeURIComponent(raw);
+  const gov  = encodeURIComponent(`site:go.kr ${raw}`);
+  const edu  = encodeURIComponent(`site:ac.kr ${raw}`);
+  return [
+    { label: '전체 검색', url: `https://www.google.com/search?q=${base}` },
+    { label: '정부/공공(go.kr)', url: `https://www.google.com/search?q=${gov}` },
+    { label: '대학/연구(ac.kr)', url: `https://www.google.com/search?q=${edu}` }
+  ];
+}
+
+function generateJoseonAnswer(q) {
+  const question = normalizeQuestion(q);
+  const type = detectType(question);
+  const topic = extractTopic(question) || '그 일';
+  const lines = [];
+
+  // ELIZA-lite: 질문 요약(되받기)
+  lines.push(`하문: “${topic}”이라…`);
+
+  switch (type) {
+    case 'definition':
+      lines.push('답: 뜻은 “무엇을 가리키는 말인지(범위)”가 먼저옵니다.');
+      lines.push('요령: ①공식 정의(기관/문서) ②사용 맥락(예시) ③예외 순으로 확인하시오.');
+      break;
+    case 'howto':
+      lines.push('답: 하실 일은 “목표→준비물→순서→검증” 네 토막으로 나누면 되옵니다.');
+      lines.push('요령: ①목표 1줄로 고정 ②필수 단계 3~5개만 추림 ③마지막에 결과 확인(체크)하시오.');
+      break;
+    case 'compare':
+      lines.push('답: 둘의 차이는 보통 “용도·제약·비용(또는 품질)”에서 갈리옵니다.');
+      lines.push('요령: ①내 상황(예산/환경) ②꼭 필요한 기능 ③AS/공식 호환 여부 순으로 고르시오.');
+      break;
+    case 'recommend':
+      lines.push('답: 추천은 “당장 필요”를 기준으로 고르면 실수가 적사옵니다.');
+      lines.push('요령: ①최소 요구조건 ②가성비 ③공식/정품(호환·안정) 순으로 점검하시오.');
+      break;
+    case 'feasibility':
+      lines.push('답: 대체로 가능/불가가 “조건”에 달렸사옵니다.');
+      lines.push('요령: ①기기/버전/환경 ②제한(규정·호환) ③대체 수단을 함께 보시오.');
+      break;
+    case 'why':
+      lines.push('답: 원인은 보통 “환경·설정·상태” 셋 중 하나에 있사옵니다.');
+      lines.push('요령: ①방금 바뀐 것(업데이트/설정) ②재현 조건 ③에러 문구를 먼저 확인하시오.');
+      break;
+    case 'number':
+      lines.push('답: 수치(칼로리/가격/용량 등)는 “공식 표기(라벨/공지)”가 제일 정확하옵니다.');
+      lines.push('요령: ①제조사/기관 자료 ②동일 제품·동일 규격 ③최근 날짜를 확인하시오.');
+      break;
+    default:
+      lines.push('답: 핵심은 “범위(무엇을 묻는가)”를 정하고, 그다음 “근거”를 찾는 것이옵니다.');
+      lines.push(fallbackAnswers[Math.floor(Math.random() * fallbackAnswers.length)]);
+  }
+
+  if (isTimeOrFactSensitive(question) || type === 'number') {
+    lines.push('주의: 최신/정확 수치가 걸린 일은 단정하지 않겠사오니, 아래 “관아 기록(검색)”으로 확인하시오.');
+  } else {
+    lines.push('근거: 아래 “관아 기록(검색)”에서 공식 자료를 찾아 확인하시면 되옵니다.');
+  }
+
+  return { lines, links: buildSearchLinks(question) };
+}
+
+function setAnswerVisible(on) {
+  answerBubble.style.visibility = on ? 'visible' : 'hidden';
+  if (answerLinks) {
+    const hasLinks = !!answerLinks.innerHTML && answerLinks.innerHTML.trim() !== '';
+    const showLinks = !!on && hasLinks;
+    answerLinks.classList.toggle('show', showLinks);
+    answerLinks.setAttribute('aria-hidden', showLinks ? 'false' : 'true');
+  }
+}
+
+function renderAnswer(result) {
+  const lines = (result && result.lines) ? result.lines : [];
+  answerBubble.innerText = question ? geegleOneLinerAnswer(question) : pick(noQuestionAnswers);
+
+  if (answerLinks) {
+    const links = (result && result.links) ? result.links : [];
+    answerLinks.innerHTML = links
+      .map(l => `<a href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(l.label)}</a>`)
+      .join('');
+  }
+
+  setAnswerVisible(true);
+}
+
+function hideAnswer() {
+  answerBubble.innerText = '';
+  if (answerLinks) answerLinks.innerHTML = '';
+  setAnswerVisible(false);
+}
+
 const noQuestionAnswers = [
   "아니, 묻지도 않고 지지는 법이 어디 있소!!",
   "무.. 무엇을 불라는 겁니까요!! 으악!",
@@ -481,18 +641,96 @@ person.addEventListener('click', (e) => {
 
   setTimeout(() => { createBurnMark(p.clientX, p.clientY); }, 280);
 
+setTimeout(() => {
+  const ans = question
+    ? geegleOneLinerAnswer(question)
+    : pickOne(noQuestionAnswers);
+
+  answerBubble.innerText = ans;
+
   setTimeout(() => {
-    const pick = question
-      ? randomAnswers[Math.floor(Math.random() * randomAnswers.length)]
-      : noQuestionAnswers[Math.floor(Math.random() * noQuestionAnswers.length)];
+    sinnerGroup.classList.remove('pain');
+    bubbleTimer = setTimeout(() => { answerBubble.style.visibility = 'hidden'; }, 3200);
+  }, 450);
+}, 520);
 
-    answerBubble.innerText = pick;
 
-    setTimeout(() => {
-      sinnerGroup.classList.remove('pain');
-      bubbleTimer = setTimeout(() => { answerBubble.style.visibility = 'hidden'; }, 3200);
-    }, 450);
-  }, 520);
+
 });
 
 window.addEventListener('load', () => updateFireRect());
+
+// ============================
+// 지글: 한 줄 답변기 (조선 말투)
+// ============================
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function normalizeQ(q) {
+  return String(q || '').trim();
+}
+
+function geegleOneLinerAnswer(q) {
+  const t = normalizeQ(q);
+
+  // 날씨
+  if (/(날씨|weather|비 와|눈 와|춥|덥|맑|흐리)/i.test(t)) {
+    return pick([
+      "오늘 날씨는 좋습니다요.",
+      "오늘은 대체로 맑사옵니다요.",
+      "바람이 살짝 있사오나, 무리는 없사옵니다요.",
+      "비가 올 듯 말 듯 하오니 우산을 챙기시옵소서."
+    ]);
+  }
+
+  // 시간/몇 시
+  if (/(몇시|몇 시|시간|time|지금 몇)/i.test(t)) {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    return `지금은 대략 ${hh}시 ${mm}분쯤 되옵니다요.`;
+  }
+
+  // 인사
+  if (/^(안녕|안녕하세요|하이|hello|hi)\b/i.test(t)) {
+    return pick([
+      "문안 올리옵니다요.",
+      "전하, 소인이 여기 있사옵니다요.",
+      "어서 오시옵소서요."
+    ]);
+  }
+
+  // 고마움
+  if (/(고마|감사|thanks|thx)/i.test(t)) {
+    return pick([
+      "황공하옵니다요.",
+      "별말씀을요.",
+      "소인도 기쁘옵니다요."
+    ]);
+  }
+
+  // 가능/불가(예/아니오)
+  if (/(가능|되나|될까|해도 돼|해도 되|할 수)/i.test(t)) {
+    return pick([
+      "되옵니다요.",
+      "대체로 가능하옵니다요.",
+      "조건만 맞으면 되옵니다요."
+    ]);
+  }
+
+  // 추천/선택
+  if (/(추천|뭐가 더|어떤 게|할까 말까|선택|비교)/i.test(t)) {
+    return pick([
+      "소인은 첫째 것을 권하옵니다요.",
+      "무난한 쪽으로 가시옵소서요.",
+      "전하의 형편엔 둘째가 더 나아 보이옵니다요."
+    ]);
+  }
+
+  // 기본 폴백
+  return pick([
+    "그리 하시옵소서요.",
+    "옳사옵니다요.",
+    "아뢰신 바, 대체로 맞사옵니다요.",
+    "그 일은 무리 없사옵니다요."
+  ]);
+}
