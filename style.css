@@ -71,7 +71,7 @@ body{
   min-height:100vh;
   background: var(--bg-color);
   color: var(--text-color);
-  cursor: none; /* 커스텀 인두 커서 */
+  cursor: none; /* 而ㅼ뒪�� �몃몢 而ㅼ꽌 */
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -86,7 +86,7 @@ body{
   padding-bottom: calc(40px + var(--footer-safe));
 }
 
-/* 입력/버튼 위에서는 기본 커서 유지 */
+/* �낅젰/踰꾪듉 �꾩뿉�쒕뒗 湲곕낯 而ㅼ꽌 �좎� */
 #question-input { cursor: text; }
 button, .search-btn, .clear-btn { cursor: pointer; }
 
@@ -96,11 +96,11 @@ button, .search-btn, .clear-btn { cursor: pointer; }
   border-radius: 10px;
 }
 
-/* ✅ 입력 포커스 중엔 “구글 느낌” 위해 인두 커서 숨김 + 기본 커서 복귀 */
+/* �� �낅젰 �ъ빱�� 以묒뿏 �쒓뎄湲� �먮굦�� �꾪빐 �몃몢 而ㅼ꽌 �④� + 湲곕낯 而ㅼ꽌 蹂듦� */
 body.input-active{ cursor: auto !important; }
 body.input-active #iron-cursor{ display:none !important; }
 
-/* ===== 상단 설정 버튼 ===== */
+/* ===== �곷떒 �ㅼ젙 踰꾪듉 ===== */
 .settings-btn-container{
   position: fixed;
   top: 14px;
@@ -139,7 +139,7 @@ body.input-active #iron-cursor{ display:none !important; }
   opacity: .95;
 }
 
-/* --- 상소문 모달 --- */
+/* --- �곸냼臾� 紐⑤떖 --- */
 .modal-overlay{
   position: fixed; inset: 0;
   background: var(--overlay-color);
@@ -245,7 +245,7 @@ body.input-active #iron-cursor{ display:none !important; }
 }
 #btn-close-settings:hover{ opacity: 1; }
 
-/* ===== 로고 ===== */
+/* ===== 濡쒓퀬 ===== */
 .geegle-logo-container{
   margin-top: clamp(72px, 14vh, 150px);
   margin-bottom: 18px;
@@ -274,7 +274,7 @@ body.input-active #iron-cursor{ display:none !important; }
 .geegle-logo-stack,
 
 
-/* ===== 검색 영역 ===== */
+/* ===== 寃��� �곸뿭 ===== */
 .search-area{
   width: min(680px, 92vw);
   display:flex;
@@ -369,7 +369,7 @@ body.input-active #iron-cursor{ display:none !important; }
 }
 .search-btn:active{ transform: translateY(1px); }
 
-/* ===== 메인 레이아웃 ===== */
+/* ===== 硫붿씤 �덉씠�꾩썐 ===== */
 .layout-row{
   display:flex;
   flex-direction: row;
@@ -387,7 +387,7 @@ body.input-active #iron-cursor{ display:none !important; }
   position: relative;
 }
 
-/* ===== 화로 ===== */
+/* ===== �붾줈 ===== */
 #fire-pit-container{
   position: relative;
   width: 300px;
@@ -468,7 +468,7 @@ body.input-active #iron-cursor{ display:none !important; }
   100% { opacity: 0.80; transform: scale(0.98); }
 }
 
-/* ===== ✅ 항아리 카운트(5 → 1) : 숫자 1개만 표시(구글 느낌) ===== */
+/* ===== �� ��븘由� 移댁슫��(5 �� 1) : �レ옄 1媛쒕쭔 �쒖떆(援ш� �먮굦) ===== */
 .heat-gauge{
   position: absolute;
   left: 14px;
@@ -482,7 +482,7 @@ body.input-active #iron-cursor{ display:none !important; }
 
   font-variant-numeric: tabular-nums;
 
-  /* ✅ Google-ish: 밝은 서피스 + 얇은 보더 + 부드러운 그림자 */
+  /* �� Google-ish: 諛앹� �쒗뵾�� + �뉗� 蹂대뜑 + 遺��쒕윭�� 洹몃┝�� */
   background: var(--surface);
   background: color-mix(in srgb, var(--surface) 88%, transparent);
   border: 1px solid var(--border);
@@ -502,7 +502,7 @@ body.input-active #iron-cursor{ display:none !important; }
   box-shadow: var(--shadow-2), 0 0 0 3px rgba(26, 115, 232, 0.18);
 }
 
-/* ✅ 하단 진행바(5초 → 0초) */
+/* �� �섎떒 吏꾪뻾諛�(5珥� �� 0珥�) */
 .heat-gauge::before,
 .heat-gauge::after{
   content:"";
@@ -531,7 +531,7 @@ body.input-active #iron-cursor{ display:none !important; }
   z-index: 1;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", Arial, sans-serif;
   font-weight: 700;
-  font-size: 38px;        /* ✅ 숫자 크게 */
+  font-size: 38px;        /* �� �レ옄 �ш쾶 */
   line-height: 1;
   letter-spacing: -0.5px;
   color: var(--text-color);
@@ -547,7 +547,7 @@ body.input-active #iron-cursor{ display:none !important; }
 }
 
 
-/* ===== 인두 커서 ===== */
+/* ===== �몃몢 而ㅼ꽌 ===== */
 #iron-cursor{
   position: fixed;
   pointer-events:none;
@@ -572,7 +572,7 @@ body.input-active #iron-cursor{ display:none !important; }
 #iron-cursor.heated .iron-head{ background:#ff2400; filter: drop-shadow(0 0 12px #ff4500); }
 #iron-cursor.heated .iron-rod{ background: linear-gradient(90deg, #ff2400 0%, #cc3300 30%, #333 70%); }
 
-/* ===== 죄인 ===== */
+/* ===== 二꾩씤 ===== */
 #person-container{
   width:200px;
   min-height:320px;
@@ -720,7 +720,7 @@ body.input-active #iron-cursor{ display:none !important; }
   box-shadow: inset 0 -6px 0 #d15c5c;
 }
 
-/* 말풍선 */
+/* 留먰뭾�� */
 #answer-bubble{
   visibility:hidden;
   position:relative;
@@ -756,7 +756,7 @@ body.input-active #iron-cursor{ display:none !important; }
   box-shadow: 6px 6px 14px rgba(0,0,0,0.06);
 }
 
-/* ✅ B버전: 답변 근거 링크(검색) 칩 */
+/* �� B踰꾩쟾: �듬� 洹쇨굅 留곹겕(寃���) 移� */
 .answer-links{
   display:none;
   width: min(300px, 82vw);
@@ -784,7 +784,7 @@ body.input-active #iron-cursor{ display:none !important; }
 .answer-links a:active{ transform: translateY(1px); }
 
 
-/* 연기 */
+/* �곌린 */
 .smoke-particle{
   position:absolute;
   border-radius:50%;
@@ -799,7 +799,7 @@ body.input-active #iron-cursor{ display:none !important; }
   100%{ opacity: 0; transform: translate(-50%, -180px) scale(2.5) rotate(20deg); background: rgba(255,255,255,0); }
 }
 
-/* 화상자국 */
+/* �붿긽�먭뎅 */
 .burn-mark{
   position:absolute;
   width:60px; height:45px;
@@ -823,7 +823,7 @@ body.input-active #iron-cursor{ display:none !important; }
   100% { opacity: 0;    filter: blur(7px) brightness(0.7);  transform: rotate(30deg) scale(0.95); }
 }
 
-/* 설정/설명 모달 활성화 시 */
+/* �ㅼ젙/�ㅻ챸 紐⑤떖 �쒖꽦�� �� */
 body.settings-active{ cursor: default !important; }
 body.settings-active #iron-cursor{ display:none !important; }
 body.settings-active button,
@@ -864,7 +864,7 @@ body.settings-active #question-input{ cursor: text; }
 .g-footer-country .g-footer-link:active{ background: rgba(60,64,67,0.14); }
 [data-theme="dark"] .g-footer-country .g-footer-link:active{ background: rgba(232,234,237,0.18); }
 
-/* 지글 설명 모달 */
+/* 吏�湲� �ㅻ챸 紐⑤떖 */
 .about-overlay{
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.45);
@@ -927,7 +927,166 @@ body.settings-active #question-input{ cursor: text; }
 }
 .about-btn:hover{ box-shadow: var(--btn-hover-shadow); }
 
-/* 모바일 */
+/* �ъ슜踰�(10珥�) �쒗넗由ъ뼹 紐⑤떖 */
+.tutorial-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 12600;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .18s ease, visibility .18s ease;
+}
+.tutorial-overlay.open{ opacity: 1; visibility: visible; }
+
+.tutorial-card{
+  width: min(540px, 92vw);
+  background: var(--surface);
+  color: var(--text-color);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-2);
+  padding: 16px 16px 14px;
+  position: relative;
+  z-index: 2;
+}
+
+.tutorial-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.tutorial-title{
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: .2px;
+}
+.tutorial-icon-btn{
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted-text);
+  cursor: pointer;
+}
+.tutorial-icon-btn:hover{ background: rgba(60,64,67,0.08); }
+[data-theme="dark"] .tutorial-icon-btn:hover{ background: rgba(232,234,237,0.12); }
+
+.tutorial-progress{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.tutorial-dots{
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.tutorial-dots .dot{
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(95,99,104,0.35);
+}
+.tutorial-dots .dot.active{
+  background: rgba(26,115,232,0.95);
+}
+.tutorial-step-label{
+  font-size: 12px;
+  color: var(--muted-text);
+}
+
+.tutorial-body{
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 14px;
+  background: rgba(0,0,0,0.02);
+}
+[data-theme="dark"] .tutorial-body{
+  background: rgba(255,255,255,0.04);
+}
+.tutorial-step-title{
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.tutorial-step-desc{
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-color);
+  opacity: .92;
+}
+
+.tutorial-actions{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+}
+.tutorial-actions-right{
+  display: inline-flex;
+  gap: 10px;
+}
+.tutorial-btn{
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--btn-hover-border);
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  cursor: pointer;
+}
+.tutorial-btn:hover{ box-shadow: var(--btn-hover-shadow); }
+
+.tutorial-btn-ghost{
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted-text);
+}
+.tutorial-btn-ghost:hover{
+  background: rgba(60,64,67,0.08);
+  box-shadow: none;
+}
+[data-theme="dark"] .tutorial-btn-ghost:hover{ background: rgba(232,234,237,0.12); }
+
+.tutorial-btn-primary{
+  border-color: rgba(26,115,232,0.35);
+  background: rgba(26,115,232,0.10);
+  color: var(--text-color);
+}
+.tutorial-btn-primary:hover{
+  box-shadow: 0 1px 6px rgba(26,115,232,0.20);
+}
+
+/* 諛곌꼍 �붿냼 媛뺤“(�ㅽ룷�몃씪�댄듃) */
+.tutorial-spotlight{
+  position: fixed;
+  left: 0; top: 0;
+  width: 0; height: 0;
+  border-radius: 18px;
+  border: 2px solid rgba(255,255,255,0.85);
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.55);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity .12s ease, left .18s ease, top .18s ease, width .18s ease, height .18s ease;
+}
+.tutorial-overlay.open .tutorial-spotlight{ opacity: 1; }
+.tutorial-spotlight.hide{ opacity: 0; }
+
+
+
+/* 紐⑤컮�� */
 @media (max-width: 768px){
   body{ padding-bottom: calc(140px + var(--footer-safe)); }
   .geegle-logo-container{ margin-top: 7vh; }
@@ -949,13 +1108,13 @@ body.settings-active #question-input{ cursor: text; }
 
 
 /* =========================================================
-   로고 락업(Geegle 중앙 고정 + 인두 옆 / 모바일은 아래)
-   - 중복 제거
-   - 찌그러짐 방지(flex-shrink:0)
-   - scale은 변수로 관리
+   濡쒓퀬 �쎌뾽(Geegle 以묒븰 怨좎젙 + �몃몢 �� / 紐⑤컮�쇱� �꾨옒)
+   - 以묐났 �쒓굅
+   - 李뚭렇�ъ쭚 諛⑹�(flex-shrink:0)
+   - scale�� 蹂��섎줈 愿�由�
    ========================================================= */
 
-/* 데스크톱: 로고는 진짜 중앙(인두가 있어도 밀리지 않게) */
+/* �곗뒪�ы넲: 濡쒓퀬�� 吏꾩쭨 以묒븰(�몃몢媛� �덉뼱�� 諛�由ъ� �딄쾶) */
 .geegle-lockup{
   width: min(680px, 92vw);
   display: grid;
@@ -964,13 +1123,13 @@ body.settings-active #question-input{ cursor: text; }
   overflow: visible;
 }
 
-/* 로고는 가운데 칸에 고정 */
+/* 濡쒓퀬�� 媛��대뜲 移몄뿉 怨좎젙 */
 .geegle-lockup .geegle-logo-svg{
   grid-column: 2;
   justify-self: center;
 }
 
-/* 인두는 오른쪽 칸 시작점(= 로고 바로 옆) */
+/* �몃몢�� �ㅻⅨ履� 移� �쒖옉��(= 濡쒓퀬 諛붾줈 ��) */
 #brand-iron{
   grid-column: 3;
   justify-self: start;
@@ -978,7 +1137,7 @@ body.settings-active #question-input{ cursor: text; }
   overflow: visible;
 }
 
-/* 인두: 커서 인두 대비 2/3 스케일 (비율 유지) */
+/* �몃몢: 而ㅼ꽌 �몃몢 ��鍮� 2/3 �ㅼ��� (鍮꾩쑉 �좎�) */
 .brand-iron{
   --brand-scale: 0.6667;
 
@@ -986,7 +1145,7 @@ body.settings-active #question-input{ cursor: text; }
   align-items: center;
   flex-wrap: nowrap;
 
-  /* ✅ 찌그러짐 방지 */
+  /* �� 李뚭렇�ъ쭚 諛⑹� */
   transform-origin: left center;
   transform: rotate(8deg) translateY(2px) scale(var(--brand-scale));
   pointer-events: none;
@@ -996,7 +1155,7 @@ body.settings-active #question-input{ cursor: text; }
   filter: drop-shadow(0 2px 6px rgba(0,0,0,0.14));
 }
 
-/* ✅ 부품들이 공간 부족으로 눌리지 않도록 고정 */
+/* �� 遺��덈뱾�� 怨듦컙 遺�議깆쑝濡� �뚮━吏� �딅룄濡� 怨좎젙 */
 .brand-iron > .iron-head,
 .brand-iron > .iron-rod,
 .brand-iron > .iron-handle{
@@ -1004,7 +1163,7 @@ body.settings-active #question-input{ cursor: text; }
   flex-shrink: 0;
 }
 
-/* heated 표현(연동용 클래스) */
+/* heated �쒗쁽(�곕룞�� �대옒��) */
 .brand-iron.heated .iron-head{
   background:#ff2400;
   filter: drop-shadow(0 0 8px rgba(255,90,0,.45));
@@ -1014,9 +1173,9 @@ body.settings-active #question-input{ cursor: text; }
 }
 
 /* ---------------------------------------------------------
-   모바일: 인두가 짤릴 수 있으니 아래로 내려 “정중앙”
-   - grid → flex column으로 전환(정렬 확실)
-   - 회전 기준점을 center로 바꿔 시각적 치우침 감소
+   紐⑤컮��: �몃몢媛� 吏ㅻ┫ �� �덉쑝�� �꾨옒濡� �대젮 �쒖젙以묒븰��
+   - grid �� flex column�쇰줈 �꾪솚(�뺣젹 �뺤떎)
+   - �뚯쟾 湲곗��먯쓣 center濡� 諛붽퓭 �쒓컖�� 移섏슦移� 媛먯냼
    --------------------------------------------------------- */
 @media (max-width: 420px){
   .geegle-lockup{
@@ -1030,17 +1189,17 @@ body.settings-active #question-input{ cursor: text; }
 
 
   .brand-iron{
-    --brand-scale: 0.62;     /* 모바일에서 살짝 더 작게 */
+    --brand-scale: 0.62;     /* 紐⑤컮�쇱뿉�� �댁쭩 �� �묎쾶 */
     transform-origin: center;
     transform: rotate(8deg) scale(var(--brand-scale));
   }
 }
 
 /* =========================================================
-   로고 락업: 로고는 정중앙, 인두는 옆
-   - 560px 이하: 인두를 아래로 내려 짤림 완전 방지
-   - 560~640px: 인두만 조금 더 줄여 중간 구간 안정화
-   - 찌그러짐 방지(flex-shrink:0)
+   濡쒓퀬 �쎌뾽: 濡쒓퀬�� �뺤쨷��, �몃몢�� ��
+   - 560px �댄븯: �몃몢瑜� �꾨옒濡� �대젮 吏ㅻ┝ �꾩쟾 諛⑹�
+   - 560~640px: �몃몢留� 議곌툑 �� 以꾩뿬 以묎컙 援ш컙 �덉젙��
+   - 李뚭렇�ъ쭚 諛⑹�(flex-shrink:0)
    ========================================================= */
 
 .geegle-lockup{
@@ -1063,7 +1222,7 @@ body.settings-active #question-input{ cursor: text; }
   overflow: visible;
 }
 
-/* 인두(기본: 커서 인두의 2/3) */
+/* �몃몢(湲곕낯: 而ㅼ꽌 �몃몢�� 2/3) */
 .brand-iron{
   --brand-scale: 0.6667;
   display: inline-flex;
@@ -1080,7 +1239,7 @@ body.settings-active #question-input{ cursor: text; }
   filter: drop-shadow(0 2px 6px rgba(0,0,0,0.14));
 }
 
-/* ✅ 찌그러짐 방지: 부품이 절대 줄어들지 않게 */
+/* �� 李뚭렇�ъ쭚 諛⑹�: 遺��덉씠 �덈� 以꾩뼱�ㅼ� �딄쾶 */
 .brand-iron > .iron-head,
 .brand-iron > .iron-rod,
 .brand-iron > .iron-handle{
@@ -1088,7 +1247,7 @@ body.settings-active #question-input{ cursor: text; }
   flex-shrink: 0;
 }
 
-/* heated 표현 */
+/* heated �쒗쁽 */
 .brand-iron.heated .iron-head{
   background:#ff2400;
   filter: drop-shadow(0 0 8px rgba(255,90,0,.45));
@@ -1097,13 +1256,13 @@ body.settings-active #question-input{ cursor: text; }
   background: linear-gradient(90deg, #ff2400 0%, #cc3300 30%, #333 70%);
 }
 
-/* ✅ 중간 폭(아직 옆 배치 유지): 살짝 더 줄여 짤림 예방 */
+/* �� 以묎컙 ��(�꾩쭅 �� 諛곗튂 �좎�): �댁쭩 �� 以꾩뿬 吏ㅻ┝ �덈갑 */
 @media (max-width: 640px){
   .brand-iron{ --brand-scale: 0.60; }
   #brand-iron{ margin-left: 10px; }
 }
 
-/* ✅ 임계 폭 이하: 무조건 아래로 내려서 “절대 안 짤리게” */
+/* �� �꾧퀎 �� �댄븯: 臾댁“嫄� �꾨옒濡� �대젮�� �쒖젅�� �� 吏ㅻ━寃뚢�� */
 @media (max-width: 560px){
   .geegle-lockup{
     display: flex;
@@ -1118,7 +1277,7 @@ body.settings-active #question-input{ cursor: text; }
   }
 
   .brand-iron{
-    --brand-scale: 0.62;      /* 아래로 내려갈 때 보기 좋은 크기 */
+    --brand-scale: 0.62;      /* �꾨옒濡� �대젮媛� �� 蹂닿린 醫뗭� �ш린 */
     transform-origin: center;
     transform: rotate(8deg) scale(var(--brand-scale));
   }
