@@ -16,9 +16,6 @@ function getPointerFromEvent(e) {
 }
 function isMobile() { return window.matchMedia('(max-width: 768px)').matches; }
 
-
-
-
 // ============================
 // 설정 모달
 // ============================
@@ -40,29 +37,6 @@ function syncOverlayState(){
     (aboutOverlay && aboutOverlay.classList.contains('open'));
   document.body.classList.toggle('settings-active', !!anyOpen);
 }
-
-function pickOne(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-function geegleOneLinerAnswer(q) {
-  const t = String(q || '').trim();
-
-  if (/(날씨|weather|비|눈|맑|흐리|춥|덥)/i.test(t)) {
-    return pickOne([
-      "오늘 날씨는 좋습니다요.",
-      "오늘은 대체로 맑사옵니다요.",
-      "바람이 좀 있사오나 무리는 없사옵니다요.",
-      "비가 올 듯하니 우산을 챙기시옵소서."
-    ]);
-  }
-
-  return pickOne([
-    "옳사옵니다요.",
-    "그리 하시옵소서요.",
-    "무리 없사옵니다요.",
-    "그렇사옵니다요."
-  ]);
-}
-
 
 btnOpenSettings.addEventListener('click', () => {
   settingsModal.classList.add('open');
@@ -199,7 +173,6 @@ let lastGaugeSec = null;
 
 const person = $('#person-container');
 const answerBubble = $('#answer-bubble');
-const answerLinks = $('#answer-links');
 const sinnerGroup = $('#sinner-group');
 
 const HEAT_DURATION_MS = 5000;
@@ -209,6 +182,9 @@ let heatTimer = null;
 let heatCountdownTimer = null;
 let heatEndsAt = 0;
 let bubbleTimer = null;
+let burnTimer = null;
+let answerTimer = null;
+let painFailSafe = null;
 
 function showHeatGauge(remainSec) {
   if (!heatGauge) return;
@@ -283,173 +259,439 @@ function holdHeatOnFire() {
   hideHeatGauge();
 }
 
-// ✅ B버전: API 없이(=로컬 룰 기반) ‘엘리자’ 느낌의 “요약→즉답→근거(검색 링크)”
-// - 정확한 수치/최신정보는 단정하지 않고, 대신 “어디서 확인할지”를 명확히 안내
-// - 말투는 조선시대 문답(나으리/전하/아뢰옵니다) 컨셉
+// ============================
+// A버전: “답만 하는” 규칙 기반 답변 엔진(오프라인)
+// - API/모델 없이, 질문 패턴 → 짧은 조선시대 말투 답변
+// - 경우의 수(룰)를 많이 넣어두면 자연스럽게 "똑똑한 척" 가능
+// ============================
 
-const fallbackAnswers = [
-  "소인, 이 일은 대개 ‘조건’에 따라 갈리옵니다.",
-  "하문하신 바는 알겠사오나, 확답은 ‘공식 기록’이 더 정확하옵니다.",
-  "한 줄로 말하자면: 핵심 기준 1~2개만 잡으면 풀리옵니다.",
-  "정리해 아뢰면, 먼저 ‘정의/범위’를 확정하고 그다음 ‘절차’를 따르시면 되옵니다."
-];
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+function pickOne(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+function normalizeQ(s){
+  return (s || '')
+    .toString()
+    .trim()
+    .replace(/[“”"']/g, '')
+    .replace(/\s+/g, ' ');
 }
+function lowerQ(s){ return normalizeQ(s).toLowerCase(); }
 
-function normalizeQuestion(q) {
-  return String(q || '')
-    .replace(/[\u200B-\u200D\uFEFF]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function extractTopic(q) {
-  const s = normalizeQuestion(q).replace(/[?？!！.]/g, ' ').trim();
-  if (!s) return '';
-  const m = s.match(/(.+?)(의미|뜻|정의|뭐야|무슨|어떤|왜|어떻게|방법|차이|비교|추천|가능|되나|될까)/);
-  const t = (m && m[1] ? m[1] : s).trim();
-  return t.length > 24 ? (t.slice(0, 24) + '…') : t;
-}
-
-function detectType(q) {
-  const s = normalizeQuestion(q);
-  if (!s) return 'empty';
-  if (/(정의|뜻|의미|무슨 뜻|무슨 의미|뭐야|무엇)/.test(s)) return 'definition';
-  if (/(어떻게|방법|하는 법|절차|순서|설치|세팅|설정|구성)/.test(s)) return 'howto';
-  if (/(차이|비교|vs|중에|중 뭐가|어느 게|어떤 게 더)/i.test(s)) return 'compare';
-  if (/(추천|고를까|선택|뭐가 좋아|뭐가 나아)/.test(s)) return 'recommend';
-  if (/(가능|되나|될까|할 수|해도 돼)/.test(s)) return 'feasibility';
-  if (/(왜|이유|원인|때문)/.test(s)) return 'why';
-  if (/(몇|얼마|수치|칼로리|kcal|가격|비용|원|g|그램|kg|cm|%|퍼센트)/i.test(s)) return 'number';
-  return 'general';
-}
-
-function isTimeOrFactSensitive(q) {
-  const s = normalizeQuestion(q);
-  return /(오늘|지금|현재|최신|요즘|이번|최근|방금|내일|어제|올해|작년|내년|\b20\d{2}\b)/.test(s);
-}
-
-function buildSearchLinks(q) {
-  const raw = normalizeQuestion(q);
-  const base = encodeURIComponent(raw);
-  const gov  = encodeURIComponent(`site:go.kr ${raw}`);
-  const edu  = encodeURIComponent(`site:ac.kr ${raw}`);
-  return [
-    { label: '전체 검색', url: `https://www.google.com/search?q=${base}` },
-    { label: '정부/공공(go.kr)', url: `https://www.google.com/search?q=${gov}` },
-    { label: '대학/연구(ac.kr)', url: `https://www.google.com/search?q=${edu}` }
-  ];
-}
-
-function generateJoseonAnswer(q) {
-  const question = normalizeQuestion(q);
-  const type = detectType(question);
-  const topic = extractTopic(question) || '그 일';
-  const lines = [];
-
-  // ELIZA-lite: 질문 요약(되받기)
-  lines.push(`하문: “${topic}”이라…`);
-
-  switch (type) {
-    case 'definition':
-      lines.push('답: 뜻은 “무엇을 가리키는 말인지(범위)”가 먼저옵니다.');
-      lines.push('요령: ①공식 정의(기관/문서) ②사용 맥락(예시) ③예외 순으로 확인하시오.');
-      break;
-    case 'howto':
-      lines.push('답: 하실 일은 “목표→준비물→순서→검증” 네 토막으로 나누면 되옵니다.');
-      lines.push('요령: ①목표 1줄로 고정 ②필수 단계 3~5개만 추림 ③마지막에 결과 확인(체크)하시오.');
-      break;
-    case 'compare':
-      lines.push('답: 둘의 차이는 보통 “용도·제약·비용(또는 품질)”에서 갈리옵니다.');
-      lines.push('요령: ①내 상황(예산/환경) ②꼭 필요한 기능 ③AS/공식 호환 여부 순으로 고르시오.');
-      break;
-    case 'recommend':
-      lines.push('답: 추천은 “당장 필요”를 기준으로 고르면 실수가 적사옵니다.');
-      lines.push('요령: ①최소 요구조건 ②가성비 ③공식/정품(호환·안정) 순으로 점검하시오.');
-      break;
-    case 'feasibility':
-      lines.push('답: 대체로 가능/불가가 “조건”에 달렸사옵니다.');
-      lines.push('요령: ①기기/버전/환경 ②제한(규정·호환) ③대체 수단을 함께 보시오.');
-      break;
-    case 'why':
-      lines.push('답: 원인은 보통 “환경·설정·상태” 셋 중 하나에 있사옵니다.');
-      lines.push('요령: ①방금 바뀐 것(업데이트/설정) ②재현 조건 ③에러 문구를 먼저 확인하시오.');
-      break;
-    case 'number':
-      lines.push('답: 수치(칼로리/가격/용량 등)는 “공식 표기(라벨/공지)”가 제일 정확하옵니다.');
-      lines.push('요령: ①제조사/기관 자료 ②동일 제품·동일 규격 ③최근 날짜를 확인하시오.');
-      break;
-    default:
-      lines.push('답: 핵심은 “범위(무엇을 묻는가)”를 정하고, 그다음 “근거”를 찾는 것이옵니다.');
-      lines.push(fallbackAnswers[Math.floor(Math.random() * fallbackAnswers.length)]);
-  }
-
-  if (isTimeOrFactSensitive(question) || type === 'number') {
-    lines.push('주의: 최신/정확 수치가 걸린 일은 단정하지 않겠사오니, 아래 “관아 기록(검색)”으로 확인하시오.');
-  } else {
-    lines.push('근거: 아래 “관아 기록(검색)”에서 공식 자료를 찾아 확인하시면 되옵니다.');
-  }
-
-  return { lines, links: buildSearchLinks(question) };
-}
-
-function setAnswerVisible(on) {
-  answerBubble.style.visibility = on ? 'visible' : 'hidden';
-  if (answerLinks) {
-    const hasLinks = !!answerLinks.innerHTML && answerLinks.innerHTML.trim() !== '';
-    const showLinks = !!on && hasLinks;
-    answerLinks.classList.toggle('show', showLinks);
-    answerLinks.setAttribute('aria-hidden', showLinks ? 'false' : 'true');
-  }
-}
-
-function renderAnswer(result) {
-  const lines = (result && result.lines) ? result.lines : [];
-  answerBubble.innerText = question ? geegleOneLinerAnswer(question) : pick(noQuestionAnswers);
-
-  if (answerLinks) {
-    const links = (result && result.links) ? result.links : [];
-    answerLinks.innerHTML = links
-      .map(l => `<a href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(l.label)}</a>`)
-      .join('');
-  }
-
-  setAnswerVisible(true);
-}
-
-function hideAnswer() {
-  answerBubble.innerText = '';
-  if (answerLinks) answerLinks.innerHTML = '';
-  setAnswerVisible(false);
-}
-
+// ✅ 질문이 없을 때(그대로 유지)
 const noQuestionAnswers = [
-  "아니, 묻지도 않고 지지는 법이 어디 있소!!",
-  "무.. 무엇을 불라는 겁니까요!! 으악!",
-  "이유나 알고 맞읍시다 나으리!!",
-  "심심해서 지지시는 겁니까!! 너무하오!!",
-  "질문이 없는데 대답을 어찌 하오리까!!",
-  "그냥 제가 다 잘못했습니다요!! (근데 뭘?)",
-  "악!! 살려주시오! 묻는 건 다 말하리다!!",
-  "아이쿠 뜨거!! 사람 살려!!",
-  "일단 지지고 보는 겁니까요? 억울하옵니다!!",
-  "말할 틈은 주셔야지요!! 으아아!!"
+  "묻는 말이 없사온데, 어찌 답하오리까.",
+  "질문을 적으시옵고 지지시옵소서.",
+  "무엇을 물으시는지 먼저 적어주시옵소서.",
+  "글을 남기시옵소서. 소인이 곧 답하리다.",
+  "질문이 없으니, 대답도 없사옵니다요."
 ];
+
+// ✅ 인두가 차가울 때(그대로 유지)
 const coldMockery = [
-  "하나도 안 뜨겁사옵니다! 헤헤.",
-  "화로에 불은 떼고 오신 겁니까?",
-  "간지럽사옵니다 나으리~",
-  "식은 인두로는 어림도 없습니다요!",
-  "아이고~ 시원~하다!",
-  "겁주려거든 제대로 달궈오셔야지요!",
-  "지금 장난하십니까요? ㅋㅋ",
-  "어이쿠, 차가워라!"
+  "하나도 안 뜨겁사옵니다요.",
+  "화로에 다시 달구어 오시옵소서.",
+  "식은 인두로는 어림없사옵니다요.",
+  "시원하옵니다요. 더 달구시옵소서.",
+  "장난은 그만하시옵고, 불을 더 지피시옵소서."
 ];
+
+// ✅ 규칙(패턴) → 답변 후보들
+// - re: 정규식(대소문자 무시 i)
+// - replies: 짧은 답변 여러 개(랜덤 선택)
+const A_RULES = [
+  // 0) 인사/대화
+  { re: /\b(안녕|하이|hello|hi|반가워|반갑)\b/i, replies: [
+    "반갑사옵니다요.",
+    "안녕하시옵니까요.",
+    "평안하시옵니까요.",
+    "무탈하시옵니까요."
+  ]},
+  { re: /\b(고마워|감사|thanks|thx)\b/i, replies: [
+    "별말씀을요.",
+    "소인이 영광이옵니다요.",
+    "고맙게 여겨 주시니 다행이옵니다요.",
+    "천만에요."
+  ]},
+  { re: /\b(미안|죄송|sorry)\b/i, replies: [
+    "괜찮사옵니다요.",
+    "허물은 잊으시옵소서.",
+    "마음 쓰지 마시옵소서.",
+    "부디 상심치 마시옵소서."
+  ]},
+  { re: /\b(잘자|굿나잇|good night|취침|자러)\b/i, replies: [
+    "편히 쉬시옵소서.",
+    "단잠 드시옵소서.",
+    "꿈자리가 좋으시길 비옵니다요.",
+    "내일을 위해 몸을 아끼시옵소서."
+  ]},
+  { re: /\b(좋아|사랑|최고|짱)\b/i, replies: [
+    "그 마음, 기쁘옵니다요.",
+    "고맙사옵니다요.",
+    "좋사옵니다요."
+  ]},
+
+  // 1) 정체/설명
+  { re: /(너 누구|누구냐|정체|너 뭐야|지글|geegle)/i, replies: [
+    "소인은 지글이라 하옵니다요.",
+    "지글이라 부르시옵소서.",
+    "소인은 물음에 답하는 자이옵니다요.",
+    "인두로 물어 답을 얻는 장난이옵니다요."
+  ]},
+  { re: /(사용법|어떻게 써|어케 써|how to use|help|도움)/i, replies: [
+    "질문을 적고, 인두를 달군 뒤 죄인을 지지시옵소서.",
+    "먼저 물음을 적으시고, 화로에 인두를 달구시옵소서.",
+    "적고 → 달구고 → 지지면, 답이 나오옵니다요.",
+    "검색을 누르고, 인두를 달구어 지지시옵소서."
+  ]},
+
+  // 2) 시간/날짜(로컬 기준)
+  { re: /(몇 ?시|시간 알려|time now|지금 시간)/i, replies: ["__TIME__"] },
+  { re: /(오늘 날짜|며칠|몇월|몇 일|date today|오늘 몇일)/i, replies: ["__DATE__"] },
+  { re: /(요일|무슨 요일|day of week)/i, replies: ["__DOW__"] },
+
+  // 3) 날씨(실측 불가 → 컨셉 답변)
+  { re: /(날씨|기온|온도|비 와|비오|눈 와|눈오|미세먼지|황사)/i, replies: [
+    "오늘 날씨는 좋습니다요.",
+    "오늘 날씨는 무난하옵니다요.",
+    "오늘은 바람이 잦사옵니다요.",
+    "오늘은 하늘이 밝사옵니다요.",
+    "오늘은 바깥이 거칠 수 있사오니 조심하시옵소서."
+  ]},
+  { re: /(춥|추워|한파)/i, replies: [
+    "바람이 매섭사오니 겹겹이 입으시옵소서.",
+    "몸을 덥히시옵소서.",
+    "따뜻한 차 한 잔이 좋겠사옵니다요.",
+    "손발을 먼저 녹이시옵소서."
+  ]},
+  { re: /(덥|더워|폭염)/i, replies: [
+    "바람 잘 통하는 옷이 좋사옵니다요.",
+    "물 자주 드시옵소서.",
+    "그늘을 찾으시옵소서.",
+    "몸을 식히시옵소서."
+  ]},
+  { re: /(우산|비 맞|장마)/i, replies: [
+    "우산을 챙기시옵소서.",
+    "빗길은 미끄럽사오니 조심하시옵소서.",
+    "비를 맞으면 감기 들기 쉽사옵니다요."
+  ]},
+
+  // 4) 옷/코디/꾸밈
+  { re: /(뭐 입|옷 추천|코디|스타일|룩|패션)/i, replies: [
+    "단정한 옷이 제일 무난하옵니다요.",
+    "겉옷 하나는 챙기시옵소서.",
+    "색은 두 가지만 맞추면 깔끔하옵니다요."
+  ]},
+
+  // 5) 음식/메뉴
+  { re: /(뭐 먹|뭐먹|점심|저녁|아침|야식|메뉴 추천|먹을거|배고)/i, replies: [
+    "따끈한 국밥이 좋사옵니다요.",
+    "면 한 그릇이 속을 달래주옵니다요.",
+    "든든하게 밥과 반찬을 챙기시옵소서.",
+    "가벼이 드시려면 죽이 무난하옵니다요.",
+    "간단히 김밥 한 줄도 좋사옵니다요."
+  ]},
+  { re: /(매운|매콤)/i, replies: [
+    "매운맛은 잠시 마음을 깨우옵니다요.",
+    "매콤하게 드시되 속은 살피시옵소서.",
+    "매운 것은 적당히가 좋사옵니다요."
+  ]},
+  { re: /(커피|카페인|아메리카노|라떼)/i, replies: [
+    "커피 한 잔은 정신을 맑게 하옵니다요.",
+    "카페인은 과하면 잠을 해치옵니다요.",
+    "한 잔만으로도 충분하옵니다요."
+  ]},
+  { re: /(술|음주|소주|맥주)/i, replies: [
+    "술은 과하면 몸을 해치옵니다요.",
+    "오늘은 한 잔으로 그치시옵소서.",
+    "물도 함께 드시옵소서."
+  ]},
+
+  // 6) 컨디션/건강(안전형 한 줄)
+  { re: /(아파|통증|열나|두통|기침|가래|설사|구토|감기|독감|코막힘|비염)/i, replies: [
+    "휴식과 수분이 먼저이옵니다요.",
+    "병세가 크면 의관을 찾으시옵소서.",
+    "증세가 이어지면 진찰을 받으시옵소서."
+  ]},
+  { re: /(약|약 먹|처방|복용|부작용)/i, replies: [
+    "약은 처방과 설명을 따르시옵소서.",
+    "복용은 의관의 뜻을 좇는 것이 옳사옵니다요.",
+    "불편이 크면 약사나 의관께 묻는 것이 안전하옵니다요."
+  ]},
+  { re: /(다이어트|살 빼|체중|몸무게)/i, replies: [
+    "적게 먹고 자주 움직이시옵소서.",
+    "급히 빼면 급히 돌아오옵니다요.",
+    "꾸준함이 이기옵니다요."
+  ]},
+
+  // 7) 감정/멘탈
+  { re: /(우울|불안|힘들|지쳤|스트레스|멘탈|공허)/i, replies: [
+    "오늘은 쉬어 가시옵소서.",
+    "숨을 고르고 한 걸음씩 가시옵소서.",
+    "지친 날엔 잠시 멈춤도 용기이옵니다요.",
+    "말로 풀면 마음이 가벼워지옵니다요."
+  ]},
+  { re: /(짜증|화나|열받|빡쳐)/i, replies: [
+    "잠시 물 한 모금 하고 가시옵소서.",
+    "한 걸음 물러나면 길이 보이옵니다요.",
+    "성낸다고 일이 풀리진 않사옵니다요."
+  ]},
+
+  // 8) 공부/일/동기
+  { re: /(공부|과제|시험|레포트|보고서|면접|발표|프레젠|ppt)/i, replies: [
+    "먼저 목차를 세우시옵소서.",
+    "작게 쪼개면 끝이 보이옵니다요.",
+    "오늘 할 몫을 정하고 바로 시작하시옵소서.",
+    "마감부터 역산하시옵소서."
+  ]},
+  { re: /(집중|집중 안돼|딴생각|미루|게으름)/i, replies: [
+    "열다섯 숨만큼만 시작하시옵소서.",
+    "핸드폰을 잠시 멀리 두시옵소서.",
+    "한 번에 한 가지를 하시옵소서.",
+    "타이머를 켜고 10분만 해보시옵소서."
+  ]},
+  { re: /(동기|의욕|의지|귀찮)/i, replies: [
+    "하기 싫을 때가 진짜 실력이옵니다요.",
+    "작게 시작하면 의욕은 뒤따르옵니다요.",
+    "오늘은 최소한만 하시옵소서."
+  ]},
+
+  // 9) 운동/루틴
+  { re: /(운동|헬스|러닝|수영|스트레칭|근력|유산소|요가)/i, replies: [
+    "가볍게 몸을 풀고 천천히 올리시옵소서.",
+    "무리하면 탈이 나옵니다요.",
+    "꾸준함이 제일이옵니다요.",
+    "오늘은 폼을 지키는 게 우선이옵니다요."
+  ]},
+
+  // 10) 일정/계획/시간관리
+  { re: /(일정|계획|스케줄|루틴|시간표)/i, replies: [
+    "오늘 할 일 셋만 적으시옵소서.",
+    "큰 일은 쪼개야 움직이옵니다요.",
+    "가장 급한 것부터 처리하시옵소서."
+  ]},
+
+  // 11) 돈/소비/투자(안전형)
+  { re: /(돈|예산|저축|절약|소비|지출)/i, replies: [
+    "쓰임을 먼저 정하면 새는 돈이 줄어드옵니다요.",
+    "필요와 욕심을 가르시옵소서.",
+    "오늘은 지갑을 단단히 여미시옵소서.",
+    "한 번 장바구니에 담고 하루를 두시옵소서."
+  ]},
+  { re: /(투자|주식|코인|비트|etf|리스크|수익률)/i, replies: [
+    "수익엔 늘 위험이 따르옵니다요.",
+    "잃어도 되는 돈으로만 하시옵소서.",
+    "남 말만 믿고 들어가면 후회가 남사옵니다요."
+  ]},
+
+  // 12) 여행/어디갈까
+  { re: /(여행|어디 가|어디갈|나들이|데이트|갈만한)/i, replies: [
+    "가까운 곳부터 다녀오시옵소서.",
+    "사람 적은 시간대를 노리시옵소서.",
+    "걷기 좋은 곳이 무난하옵니다요."
+  ]},
+
+  // 13) 기술/코딩/오류
+  { re: /(버그|오류|에러|error|콘솔|console|js|javascript|css|html|프론트|백엔드)/i, replies: [
+    "콘솔의 붉은 글을 먼저 살피시옵소서.",
+    "최근에 바꾼 부분부터 되짚으시옵소서.",
+    "하나씩 끊어가며 원인을 찾으시옵소서.",
+    "캐시를 비우고 다시 보시옵소서."
+  ]},
+  { re: /(깃허브|github|pages|배포|deploy|도메인|호스팅)/i, replies: [
+    "정적 파일이면 깃허브 페이지로도 족하옵니다요.",
+    "경로와 대소문자를 엄격히 맞추시옵소서.",
+    "캐시가 남으면 강력 새로고침을 하시옵소서."
+  ]},
+
+  // 14) 요약/정리/번역/해석
+  { re: /(요약|정리|핵심|한줄)/i, replies: [
+    "원문을 붙여주시면 핵심만 뽑아드리겠사옵니다요.",
+    "자료를 주시면 깔끔히 정리하겠사옵니다요.",
+    "내용을 보여주셔야 요약이 가능하옵니다요."
+  ]},
+  { re: /(번역|해석|translate)/i, replies: [
+    "원문을 주시면 옮기겠사옵니다요.",
+    "문장을 보내주시면 번역해드리겠사옵니다요.",
+    "원문이 없으니 번역이 어려우옵니다요."
+  ]},
+  { re: /(맞춤법|띄어쓰기|오탈자)/i, replies: [
+    "문장을 붙여주시면 바로잡아드리겠사옵니다요.",
+    "글을 주시면 매만져드리겠사옵니다요."
+  ]},
+
+  // 15) 선택/추천/비교
+  { re: /(추천|골라|선택|뭐가 좋|어떤게 좋|사야)/i, replies: [
+    "무난한 쪽이 길게 가옵니다요.",
+    "지금은 간단한 선택이 옳사옵니다요.",
+    "가장 자주 쓰는 것을 고르시옵소서.",
+    "후회가 적은 쪽을 택하시옵소서."
+  ]},
+  { re: /(비교|차이|vs|대비)/i, replies: [
+    "장점과 단점을 나눠 보시옵소서.",
+    "가격·내구·편의 셋만 보면 답이 나오옵니다요.",
+    "목적이 분명하면 선택도 쉬워지옵니다요."
+  ]},
+
+  // 16) 관계/연애/사람
+  { re: /(연애|썸|짝사랑|헤어|이별|고백)/i, replies: [
+    "말로 정리하면 길이 트이옵니다요.",
+    "상대의 뜻도 살피시옵소서.",
+    "마음을 숨기면 후회가 남사옵니다요."
+  ]},
+  { re: /(친구|사람|관계|소통|대화|오해)/i, replies: [
+    "말을 짧고 분명히 하시옵소서.",
+    "상대의 말을 끝까지 들으시옵소서.",
+    "감정은 낮추고 사실을 올리시옵소서."
+  ]},
+
+  // 17) 디자인/감각
+  { re: /(디자인|레이아웃|타이포|폰트|그리드|색|컬러|브랜딩|로고)/i, replies: [
+    "여백이 곧 품격이옵니다요.",
+    "폰트는 두 가지만 쓰시옵소서.",
+    "대비를 세우면 읽힘이 좋아지옵니다요.",
+    "정렬만 맞춰도 반은 먹고 들어가옵니다요."
+  ]},
+
+  // 18) 가격/얼마/비용
+  { re: /(얼마|가격|비용|값|견적)/i, replies: [
+    "값은 곳마다 다르옵니다요.",
+    "정확한 값은 조건을 더 알려주셔야 하옵니다요.",
+    "대략은 가능하오나, 세부가 필요하옵니다요."
+  ]},
+
+  // 19) 왜/원인/이유
+  { re: /(왜|원인|이유|까닭)/i, replies: [
+    "대개는 조건이 하나 어긋난 탓이옵니다요.",
+    "원인은 하나가 아닐 때가 많사옵니다요.",
+    "최근에 바뀐 것이 원인일 가능성이 크옵니다요."
+  ]},
+
+  // 20) 방법/어떻게/해야
+  { re: /(어떻게|방법|해결|해야|하나)/i, replies: [
+    "큰 걸 먼저, 작은 건 나중에 하시옵소서.",
+    "한 번에 하나씩 처리하시옵소서.",
+    "가장 쉬운 것부터 손대면 길이 트이옵니다요."
+  ]},
+
+  // 21) 가능/불가능/해도돼
+  { re: /(가능해|가능함|해도 돼|해도되|되나|될까)/i, replies: [
+    "가능하옵니다요.",
+    "대개는 되옵니다요.",
+    "조건만 맞추면 되옵니다요."
+  ]},
+  { re: /(불가능|안 돼|안되|못해|힘들어)/i, replies: [
+    "그 일은 어렵사옵니다요.",
+    "지금은 무리이옵니다요.",
+    "다른 길을 택하시옵소서."
+  ]},
+
+  // 22) 운세/점/미신
+  { re: /(운세|사주|점괘|타로)/i, replies: [
+    "운은 참고만 하시옵소서.",
+    "오늘은 마음가짐이 길흉을 가르옵니다요.",
+    "좋은 징조만 취하시옵소서."
+  ]},
+
+  // 23) 게임/잡담
+  { re: /(게임|스듀|스타듀|stardew|롤|발로|minecraft|포켓몬)/i, replies: [
+    "즐길 땐 즐기되, 끝낼 때는 끝내시옵소서.",
+    "오늘은 운이 따르옵니다요.",
+    "너무 무리하진 마시옵소서."
+  ]},
+
+  // 24) 정치/사회(중립 한 줄)
+  { re: /(정치|대통령|선거|국회|정당)/i, replies: [
+    "그 일은 각자 판단이 필요하옵니다요.",
+    "여럿의 말을 듣고 스스로 가르시옵소서.",
+    "감정이 아닌 근거를 살피시옵소서."
+  ]},
+
+  // 25) 욕설/무례(톤 정리)
+  { re: /(ㅅㅂ|시발|씨발|병신|좆|꺼져|닥쳐)/i, replies: [
+    "말을 고르시옵소서.",
+    "거친 말은 복을 쫓아내옵니다요.",
+    "잠시 숨을 고르시옵소서."
+  ]},
+
+  // 26) 예/아니오(짧게)
+  { re: /^(응|ㅇㅇ|그래|그렇지|맞아|예|yes)\b/i, replies: [
+    "그러하옵니다요.",
+    "옳사옵니다요.",
+    "그리 하시옵소서."
+  ]},
+  { re: /^(아니|ㄴㄴ|no|아닙|싫)\b/i, replies: [
+    "아니옵니다요.",
+    "그리 아니하옵니다요.",
+    "그 길은 피하시옵소서."
+  ]},
+];
+
+// ✅ 마지막 폴백(아무 룰에도 안 걸릴 때)
+const A_FALLBACK = [
+  "그러하옵니다요.",
+  "그리 하시면 되옵니다요.",
+  "소인이 보기엔 무난하옵니다요.",
+  "지금은 그리 하시되, 상황을 보며 바꾸시옵소서.",
+  "알 길이 없사오니, 더 자세히 적어주시옵소서."
+];
+
+function formatTwo(n){ return String(n).padStart(2, '0'); }
+function getTimeLine(){
+  const d = new Date();
+  return `지금은 ${d.getHours()}시 ${formatTwo(d.getMinutes())}분이옵니다요.`;
+}
+function getDateLine(){
+  const d = new Date();
+  return `오늘은 ${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일이옵니다요.`;
+}
+function getDowLine(){
+  const d = new Date();
+  const days = ["일","월","화","수","목","금","토"];
+  return `오늘은 ${days[d.getDay()]}요일이옵니다요.`;
+}
+
+// ✅ 아주 간단한 산수 처리(원하면 더 확장 가능)
+function trySimpleMath(raw){
+  const s = raw.replace(/,/g,'').trim();
+  const m = s.match(/^(-?\d+(?:\.\d+)?)\s*([+\-*/])\s*(-?\d+(?:\.\d+)?)$/);
+  if (!m) return null;
+  const a = Number(m[1]), op = m[2], b = Number(m[3]);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+
+  let r;
+  if (op === '+') r = a + b;
+  else if (op === '-') r = a - b;
+  else if (op === '*') r = a * b;
+  else if (op === '/') {
+    if (b === 0) return "0으로 나눌 수는 없사옵니다요.";
+    r = a / b;
+  }
+  const pretty = Number.isInteger(r) ? String(r) : String(Math.round(r * 1000) / 1000);
+  return `그 값은 ${pretty}이옵니다요.`;
+}
+
+function geegleAnswer(rawQuestion){
+  const raw = normalizeQ(rawQuestion);
+  if (!raw) return pickOne(noQuestionAnswers);
+
+  // 산수 먼저
+  const mathLine = trySimpleMath(raw);
+  if (mathLine) return mathLine;
+
+  const low = lowerQ(raw);
+
+  for (const rule of A_RULES){
+    if (rule.re.test(raw) || rule.re.test(low)){
+      const picked = pickOne(rule.replies);
+
+      if (picked === "__TIME__") return getTimeLine();
+      if (picked === "__DATE__") return getDateLine();
+      if (picked === "__DOW__")  return getDowLine();
+
+      return picked;
+    }
+  }
+
+  return pickOne(A_FALLBACK);
+}
 
 function promptToInterrogate() {
   answerBubble.innerText = "질문을 적었으면… 인두를 달궈 죄인을 지지시오!";
@@ -613,7 +855,12 @@ person.addEventListener('click', (e) => {
 
   const question = questionInput.value.trim();
 
+  // ✅ 이전 인터랙션 타이머 정리(연타/예외로 pain 고착 방지)
   if (bubbleTimer) { clearTimeout(bubbleTimer); bubbleTimer = null; }
+  if (burnTimer)   { clearTimeout(burnTimer); burnTimer = null; }
+  if (answerTimer) { clearTimeout(answerTimer); answerTimer = null; }
+  if (painFailSafe){ clearTimeout(painFailSafe); painFailSafe = null; }
+  sinnerGroup.classList.remove('pain');
 
   if (!isHeated) {
     const mock = coldMockery[Math.floor(Math.random() * coldMockery.length)];
@@ -623,7 +870,10 @@ person.addEventListener('click', (e) => {
     return;
   }
 
+  // ✅ pain 애니메이션을 매번 확실히 재생 + 최악의 경우 2초 후 강제 해제
+  void sinnerGroup.offsetWidth;
   sinnerGroup.classList.add('pain');
+  painFailSafe = setTimeout(() => { sinnerGroup.classList.remove('pain'); painFailSafe = null; }, 2000);
 
   const p = getPointerFromEvent(e) || {
     clientX: e.clientX,
@@ -639,98 +889,20 @@ person.addEventListener('click', (e) => {
 
   coolDown(); // ✅ 지지면 즉시 식음(카운트도 종료)
 
-  setTimeout(() => { createBurnMark(p.clientX, p.clientY); }, 280);
+  burnTimer = setTimeout(() => { createBurnMark(p.clientX, p.clientY); burnTimer = null; }, 280);
 
-setTimeout(() => {
-  const ans = question
-    ? geegleOneLinerAnswer(question)
-    : pickOne(noQuestionAnswers);
+  answerTimer = setTimeout(() => {
+    const pick = question ? geegleAnswer(question) : pickOne(noQuestionAnswers);
 
-  answerBubble.innerText = ans;
+    answerBubble.innerText = pick;
 
-  setTimeout(() => {
-    sinnerGroup.classList.remove('pain');
-    bubbleTimer = setTimeout(() => { answerBubble.style.visibility = 'hidden'; }, 3200);
-  }, 450);
-}, 520);
-
-
-
+    setTimeout(() => {
+      sinnerGroup.classList.remove('pain');
+      if (painFailSafe){ clearTimeout(painFailSafe); painFailSafe = null; }
+      bubbleTimer = setTimeout(() => { answerBubble.style.visibility = 'hidden'; }, 3200);
+    }, 450);
+    answerTimer = null;
+  }, 520);
 });
 
 window.addEventListener('load', () => updateFireRect());
-
-// ============================
-// 지글: 한 줄 답변기 (조선 말투)
-// ============================
-function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-function normalizeQ(q) {
-  return String(q || '').trim();
-}
-
-function geegleOneLinerAnswer(q) {
-  const t = normalizeQ(q);
-
-  // 날씨
-  if (/(날씨|weather|비 와|눈 와|춥|덥|맑|흐리)/i.test(t)) {
-    return pick([
-      "오늘 날씨는 좋습니다요.",
-      "오늘은 대체로 맑사옵니다요.",
-      "바람이 살짝 있사오나, 무리는 없사옵니다요.",
-      "비가 올 듯 말 듯 하오니 우산을 챙기시옵소서."
-    ]);
-  }
-
-  // 시간/몇 시
-  if (/(몇시|몇 시|시간|time|지금 몇)/i.test(t)) {
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    return `지금은 대략 ${hh}시 ${mm}분쯤 되옵니다요.`;
-  }
-
-  // 인사
-  if (/^(안녕|안녕하세요|하이|hello|hi)\b/i.test(t)) {
-    return pick([
-      "문안 올리옵니다요.",
-      "전하, 소인이 여기 있사옵니다요.",
-      "어서 오시옵소서요."
-    ]);
-  }
-
-  // 고마움
-  if (/(고마|감사|thanks|thx)/i.test(t)) {
-    return pick([
-      "황공하옵니다요.",
-      "별말씀을요.",
-      "소인도 기쁘옵니다요."
-    ]);
-  }
-
-  // 가능/불가(예/아니오)
-  if (/(가능|되나|될까|해도 돼|해도 되|할 수)/i.test(t)) {
-    return pick([
-      "되옵니다요.",
-      "대체로 가능하옵니다요.",
-      "조건만 맞으면 되옵니다요."
-    ]);
-  }
-
-  // 추천/선택
-  if (/(추천|뭐가 더|어떤 게|할까 말까|선택|비교)/i.test(t)) {
-    return pick([
-      "소인은 첫째 것을 권하옵니다요.",
-      "무난한 쪽으로 가시옵소서요.",
-      "전하의 형편엔 둘째가 더 나아 보이옵니다요."
-    ]);
-  }
-
-  // 기본 폴백
-  return pick([
-    "그리 하시옵소서요.",
-    "옳사옵니다요.",
-    "아뢰신 바, 대체로 맞사옵니다요.",
-    "그 일은 무리 없사옵니다요."
-  ]);
-}
