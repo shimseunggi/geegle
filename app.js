@@ -820,22 +820,31 @@
       }, 280);
 
       answerTimer = setTimeout(() => {
-        const pick = question ? geegleAnswer(question) : pickOne(noQuestionAnswers);
+  let pick;
 
-        if (EL.bubble) {
-          EL.bubble.textContent = pick;
-          EL.bubble.style.visibility = 'visible';
-        }
+  try {
+    pick = question ? geegleAnswer(question) : pickOne(noQuestionAnswers);
+  } catch (err) {
+    console.error("[geegleAnswer error]", err);
+    // 에러 나도 비명에서 빠져나오도록 안전 문구
+    pick = "전하… 소인의 말이 잠시 엉켰사옵니다. 다시 한 번 지져 주시옵소서.";
+    // 또는: pick = hallucinatedFallback(question || "");
+  }
 
-        setTimeout(() => {
-          EL.sinner.classList.remove('pain');
-          if (painFailSafe) { clearTimeout(painFailSafe); painFailSafe = null; }
-          // hide after a bit
-          Bubble.show(pick, 3200);
-        }, 450);
+  if (EL.bubble) {
+    EL.bubble.textContent = pick;
+    EL.bubble.style.visibility = 'visible';
+  }
 
-        answerTimer = null;
-      }, 520);
+  setTimeout(() => {
+    EL.sinner.classList.remove('pain');
+    if (painFailSafe) { clearTimeout(painFailSafe); painFailSafe = null; }
+    Bubble.show(pick, 3200);
+  }, 450);
+
+  answerTimer = null;
+}, 520);
+
     });
   };
 
@@ -1363,24 +1372,30 @@ function hallucinatedFallback(question){
   let s = "";
 
   if (isCompare) {
-    s = `${key}${GWA} ${key2} 중에서는, 대개 ${key} 쪽이 더 무난하옵니다요.`;
-  } else if (isHow) {
-    s = `${key}${EUN} ${actions1[Math.floor(Math.random()*actions1.length)]}하시고, ${actions2[Math.floor(Math.random()*actions2.length)]} 하시옵소서.`;
-  } else if (isWhy) {
-    s = `${key}${EUN} 대개 ${reasons[Math.floor(Math.random()*reasons.length)]} 그러하옵니다요.`;
-  } else if (isWhat) {
-    s = `${key}${EUN} ${defs[Math.floor(Math.random()*defs.length)]}이라 하옵니다요.`;
-  } else if (isWhen) {
-    s = `${key}${EUN} 보통 ‘상황이 갖춰지는 때’에 맞추는 게 좋사옵니다요.`;
-  } else if (isWhere) {
-    s = `${key}${EUL} 찾으려면, 가장 가까운 ‘핵심 위치’부터 보시옵소서.`;
-  } else if (isHowMuch) {
-    s = `${key}${EUN} ‘너무 많지도 적지도 않게’가 상책이옵니다요.`;
-  } else if (isShould) {
-    s = `${key}${EUN} 지금은 그리 하심이 무난하옵니다요.`;
-  } else {
-    s = `${key}${EUN} 그렇게 굴러가옵니다요.`;
-  }
+  s = `${key}${GWA} ${key2} 중에는, 대개 ${key} 쪽이 더 나으옵니다.`;
+} else if (isHow) {
+  s = `${key}${EUN} 먼저 살피시고, 이내 정리하시옵소서.`;
+} else if (isWhy) {
+  s = `${key}${EUN} 대개 ${reasons[Math.floor(Math.random()*reasons.length)]} 탓이옵니다.`;
+} else if (isWhat) {
+  s = `${key}${EUN} ${defs[Math.floor(Math.random()*defs.length)]}이라 하옵니다.`;
+} else if (isWhen) {
+  s = `${key}${EUN} 때가 이르면 하시옵소서.`;
+} else if (isWhere) {
+  s = `${key}${EUL} 찾으려면, 가까운 곳부터 살피시옵소서.`;
+} else if (isHowMuch) {
+  s = `${key}${EUN} 과하지 않게 하시옵소서.`;
+} else if (isShould) {
+  s = `${key}${EUN} 그리 하심이 좋사옵니다.`;
+} else {
+  const generic = [
+    `전하, ${key}${EUN} 더 자세히 아뢰시옵소서.`,
+    `전하, ${key}${EUN} 뜻이옵니까, 방법이옵니까?`,
+    `전하, ${key}${EUN} 어느 대목이 궁금하시오?`,
+  ];
+  s = generic[Math.floor(Math.random()*generic.length)];
+}
+
 
   const out = `${pickOne(prefixes)} ${s}`;
   return oneLine(out);
@@ -1618,7 +1633,7 @@ function geegleAnswer(rawQuestion){
 
   // 산수 먼저
   const mathLine = trySimpleMath(raw);
-  if (mathLine) return onLine(mathLine);
+  if (mathLine) return oneLine(mathLine);
 
   // ✅ “A는 B야?” 같은 문장 먼저 처리(컨셉 유지 + 어색함 제거)
   const copulaLine = tryCopulaQAJoseon(raw);
