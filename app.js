@@ -1240,82 +1240,18 @@ const A_FALLBACK = [
   "알 길이 없사오니, 더 자세히 적어주시옵소서."
 ];
 
-// ✅ "질문에 답한 것처럼" 보이게 하는 생성형 폴백(룰 미매칭 시)
-// - 질문에서 키워드 1~2개를 뽑아 답변에 반드시 포함(앵커링)
-// - 질문 유형(왜/어떻게/정의/선택/수치 등)에 따라 한 줄 템플릿으로 생성
+// ✅ "질문에 답한 것처럼" 보이게 하는 폴백/분류기 (정리본)
+// - 목표: "잘생겼어는..." 같은 비문 제거 + 6W/평가질문 안정 처리 + 조선톤 유지
+
 function hasJongseong(word){
-  if (!word) return false;
-  const ch = word[word.length - 1];
+  const w = String(word || '').trim();
+  if (!w) return false;
+  const ch = w[w.length - 1];
   const code = ch.charCodeAt(0);
-  // Hangul syllables range
   if (code < 0xAC00 || code > 0xD7A3) return false;
-  const jong = (code - 0xAC00) % 28;
-  return jong !== 0;
+  return ((code - 0xAC00) % 28) !== 0;
 }
 function josa(word, a, b){ return hasJongseong(word) ? a : b; }
-
-function stripJosaSuffix(t){
-  if (!t) return t;
-  t = t.trim();
-  if (t.length <= 1) return t;
-
-  // 1) 끝 조사 제거 (1회)
-  t = t.replace(
-    /(께서|에게|한테|에서|부터|까지|마다|조차|마저|으로|로|은|는|이|가|을|를|와|과|의|에|도|만)$/u,
-    ''
-  );
-
-  // 2) 끝 종결/의문 어미 제거 (1회)
-  // 예: 명문대야 -> 명문대, 맞냐 -> 맞, 명문대인가 -> 명문대
-  t = t.replace(
-    /(인가요|인가|이야|야|냐|니|임)$/u,
-    ''
-  );
-
-  return t;
-}
-
-
-function extractKeywords(q){
-  const raw = (String(q).match(/[가-힣A-Za-z0-9]+/g) || []).map(s => s.trim()).filter(Boolean);
-
-  const stop = new Set([
-    "뭐","무엇","왜","어떻게","어떤","가능","되나","돼","되요","해","해줘","해주세요","해야",
-    "추천","방법","하는법","해결","이유","원인","때문","까닭",
-    "언제","어디","누구","얼마","몇","정도","좀","그냥","진짜",
-    "너","나","우리","전하","소인","죄인"
-  ]);
-
-  // 토큰 정제 + 점수화 (동점이면 "앞에 나온 단어"를 우선 선택)
-  const scored = raw.map((tok, idx) => {
-    const t = stripJosaSuffix(tok);
-
-    // 너무 짧거나 stop이면 후보에서 제외
-    if (!t || t.length < 2) return null;
-    if (stop.has(t.toLowerCase())) return null;
-
-    // 점수: 길이 + (대/대학교 같은 고유명사 느낌 약간 가산)
-    let score = t.length;
-    if (/(대학교|대학)$/.test(t) || /대$/.test(t)) score += 2;
-
-    return { t, idx, score };
-  }).filter(Boolean);
-
-  // 점수 내림차순, 동점이면 idx(앞에 나온 것) 오름차순
-  scored.sort((a, b) => (b.score - a.score) || (a.idx - b.idx));
-
-  // 중복 제거하면서 2개만
-  const out = [];
-  const seen = new Set();
-  for (const it of scored) {
-    if (seen.has(it.t)) continue;
-    seen.add(it.t);
-    out.push(it.t);
-    if (out.length >= 2) break;
-  }
-  return out;
-}
-
 
 // 말풍선은 짧을수록 그럴듯해서, 강제로 한 줄로 압축
 function oneLine(text, maxLen = 54){
@@ -1323,84 +1259,22 @@ function oneLine(text, maxLen = 54){
   return t.length > maxLen ? (t.slice(0, maxLen - 1) + "…") : t;
 }
 
-function hallucinatedFallback(question){
-  const q = String(question || '').trim();
-  const [k1, k2] = extractKeywords(q);
-  const key = k1 || "그 일";
-  const key2 = k2 || "";
-
-  const EUN = josa(key, "은", "는");
-  const EUL = josa(key, "을", "를");
-  const GWA = josa(key, "과", "와");
-
-  // 아주 대충 유형 분류
-  const isWhy     = /(왜|이유|원인|까닭)/.test(q);
-  const isHow     = /(어떻게|방법|하는법|해결|설정|세팅|고쳐)/.test(q);
-  const isWhat    = /(뭐야|무엇|뜻|의미|정의)/.test(q);
-  const isWhen    = /(언제|몇시|날짜|기간|며칠|언제까지)/.test(q);
-  const isWhere   = /(어디|위치|장소|어느)/.test(q);
-  const isHowMuch = /(얼마|몇|가격|비용|칼로리|g\b|kg\b|원\b)/i.test(q);
-  const isCompare = (/(차이|비교|vs|중에|둘 중|더)/i.test(q) && !!key2);
-  const isShould  = /(할까|해야|괜찮|가능|추천|골라|선택)/.test(q);
-
-  const prefixes = [
-    "소인 아뢰오되,",
-    "살려만 주시면…",
-    "으윽…",
-    "듣자 하니,",
-    "짐작컨대,"
-  ];
-
-  const reasons = [
-    "환경이 달라서",
-    "설정이 꼬여서",
-    "균형이 무너져서",
-    "순서가 틀려서",
-    "과하게 몰아서",
-    "연결이 약해서"
-  ];
-
-  const actions1 = ["우선 확인", "먼저 정리", "가볍게 테스트", "핵심만 추려 보기", "작게 시작"];
-  const actions2 = ["그다음 적용", "이후 비교", "마지막에 바꾸기", "안 되면 다른 길", "천천히 늘리기"];
-
-  const defs = [
-    "어떤 작동/개념을 가리키는 말",
-    "상황에 따라 의미가 달라지는 용어",
-    "한마디로 정리하면 ‘방식’에 가까운 것"
-  ];
-
-  let s = "";
-
-  if (isCompare) {
-  s = `${key}${GWA} ${key2} 중에는, 대개 ${key} 쪽이 더 나으옵니다.`;
-} else if (isHow) {
-  s = `${key}${EUN} 먼저 살피시고, 이내 정리하시옵소서.`;
-} else if (isWhy) {
-  s = `${key}${EUN} 대개 ${reasons[Math.floor(Math.random()*reasons.length)]} 탓이옵니다.`;
-} else if (isWhat) {
-  s = `${key}${EUN} ${defs[Math.floor(Math.random()*defs.length)]}이라 하옵니다.`;
-} else if (isWhen) {
-  s = `${key}${EUN} 때가 이르면 하시옵소서.`;
-} else if (isWhere) {
-  s = `${key}${EUL} 찾으려면, 가까운 곳부터 살피시옵소서.`;
-} else if (isHowMuch) {
-  s = `${key}${EUN} 과하지 않게 하시옵소서.`;
-} else if (isShould) {
-  s = `${key}${EUN} 그리 하심이 좋사옵니다.`;
-} else {
-  const generic = [
-    `전하, ${key}${EUN} 더 자세히 아뢰시옵소서.`,
-    `전하, ${key}${EUN} 뜻이옵니까, 방법이옵니까?`,
-    `전하, ${key}${EUN} 어느 대목이 궁금하시오?`,
-  ];
-  s = generic[Math.floor(Math.random()*generic.length)];
+function stripEndPunct(s){
+  return String(s || '').trim().replace(/[?？!！.。…]+$/g, '').trim();
 }
-
-
-  const out = `${pickOne(prefixes)} ${s}`;
-  return oneLine(out);
+function cleanPhrase(s){
+  return stripEndPunct(s).replace(/\s+/g,' ').trim();
 }
+function stripJosaSuffix(t){
+  t = cleanPhrase(t);
+  if (t.length <= 1) return t;
 
+  // 조사 1회 제거
+  t = t.replace(/(께서|에게|한테|에서|부터|까지|마다|조차|마저|으로|로|은|는|이|가|을|를|와|과|의|에|도|만)$/u, '');
+  // 종결/의문 어미 1회 제거(동사/형용사 꼬리 최소화)
+  t = t.replace(/(인가요|인가|이야|야|냐|니|임|여|요)$/u, '');
+  return t.trim();
+}
 
 function formatTwo(n){ return String(n).padStart(2, '0'); }
 function getTimeLine(){
@@ -1417,11 +1291,12 @@ function getDowLine(){
   return `오늘은 ${days[d.getDay()]}요일이옵니다요.`;
 }
 
-// ✅ 아주 간단한 산수 처리(원하면 더 확장 가능)
+// ✅ 아주 간단한 산수 처리
 function trySimpleMath(raw){
-  const s = raw.replace(/,/g,'').trim();
+  const s = String(raw || '').replace(/,/g,'').trim();
   const m = s.match(/^(-?\d+(?:\.\d+)?)\s*([+\-*/])\s*(-?\d+(?:\.\d+)?)$/);
   if (!m) return null;
+
   const a = Number(m[1]), op = m[2], b = Number(m[3]);
   if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
 
@@ -1433,214 +1308,239 @@ function trySimpleMath(raw){
     if (b === 0) return "0으로 나눌 수는 없사옵니다요.";
     r = a / b;
   }
+
   const pretty = Number.isInteger(r) ? String(r) : String(Math.round(r * 1000) / 1000);
   return `그 값은 ${pretty}이옵니다요.`;
 }
 
-// ============================
-// ✅ 육하원칙(5W1H) 문형 기반 답변 (조선톤, 기본은 "모르옵니다")
-// ============================
+// ----------------------------
+// 6W/예아니오/평가 질문 분류
+// ----------------------------
+const STOP_QWORDS = new Set([
+  '어디','어딨','어딨어','어디에','어디야','어디있어',
+  '언제','누구','누가','뭐','무엇','왜','어떻게','어케','어떡',
+  '잘생겼어','예뻐','멋있어','귀여워','괜찮아','좋아','나빠'
+]);
 
-function stripEndPunct(s){
-  return String(s || '').trim().replace(/[?？!！.。…]+$/g, '').trim();
-}
-
-// 받침 여부(은/는 자동 선택용)
-function hasBatchim(word){
-  const w = String(word || '').trim();
-  if (!w) return false;
-  const ch = w[w.length - 1];
-  const code = ch.charCodeAt(0);
-  if (code < 0xAC00 || code > 0xD7A3) return false;
-  return ((code - 0xAC00) % 28) !== 0;
-}
-function topicParticle(word){
-  return hasBatchim(word) ? "은" : "는";
-}
-function useParticle(word, p){
-  // 질문에서 이미 은/는이 잡히면 그대로 쓰고, 없으면 자동 선택
-  if (p === "은" || p === "는") return p;
-  return topicParticle(word);
-}
-
-// 질문에서 “주어(대상)”를 뽑는 공용 함수
-function extractSubjectBefore(base, keywordRe){
-  // 예: "남산은 어디에 있어" -> subj="남산", particle="은"
-  const m = base.match(new RegExp(`^(.+?)\\s*(은|는|이|가)?\\s*${keywordRe.source}`, 'u'));
-  if (!m) return { subj: "", particle: "" };
-  const subj = (m[1] || "").trim();
-  const particle = (m[2] || "").trim();
-  return { subj, particle };
-}
-
-// "~는 ~야?" 같은 서술/판단 질문도 "무엇"으로 처리(문형이 5W1H 안에서 '무엇/어떠한가'에 해당)
-function matchCopulaYesNo(base){
-  // 예: "명지대는 명문대야", "A는 B입니까", "A가 B냐", "A는 B맞아"
-  const m = base.match(/^(.+?)\s*(은|는|이|가)\s*(.+?)\s*(야|이야|인가|인가요|입니까|맞아|맞나요|맞냐|맞니)\s*$/u);
-  if (!m) return null;
-  return {
-    lhs: (m[1] || "").trim(),
-    particle: (m[2] || "").trim(),
-    rhs: (m[3] || "").trim()
-  };
-}
-
-function trySixW1HAnswer(raw){
-  const base = stripEndPunct(normalizeQ(raw));
-  if (!base) return null;
-
-  // 0) "~는 ~야?" / "~ 맞아?" 류 → "무엇(어떠한가)"로 처리 (항상 모르옵니다 계열)
-  const cop = matchCopulaYesNo(base);
-  if (cop && cop.lhs && cop.rhs){
-    const p = (cop.particle === "은" || cop.particle === "는") ? cop.particle : topicParticle(cop.lhs);
-    const variants = [
-      `소인 아뢰오되, ${cop.lhs}${p} ${cop.rhs}인지 알지 못하옵니다요.`,
-      `소인 아뢰오되, ${cop.lhs}${p} ${cop.rhs}라 단정하기 어렵사옵니다요.`,
-      `소인 분수로는 ${cop.lhs}${p} ${cop.rhs}인지 헤아릴 길이 없사옵니다요.`
-    ];
-    return pickOne(variants);
-  }
-
-  // 1) 어디(WHERE)
-  if (/어디/u.test(base)){
-    const { subj, particle } = extractSubjectBefore(base, /어디/u);
-    if (subj){
-      const p = useParticle(subj, particle);
-      return `소인 아뢰오되, ${subj}${p} 어디에 있는지 모르옵니다요.`;
-    }
-    return `소인 아뢰오되, 어디에 있는지 소인은 모르옵니다요.`;
-  }
-
-  // 2) 언제(WHEN)
-  if (/(언제|몇\s*시|몇시|며칠|날짜|기간|언제까지|시간)/u.test(base)){
-    const { subj, particle } = extractSubjectBefore(base, /(언제|몇\s*시|몇시|며칠|날짜|기간|언제까지|시간)/u);
-    if (subj){
-      const p = useParticle(subj, particle);
-      return `소인 아뢰오되, ${subj}${p} 언제인지 모르옵니다요.`;
-    }
-    return `소인 아뢰오되, 언제인지는 소인이 모르옵니다요.`;
-  }
-
-  // 3) 누구(WHO)
-  if (/(누구|누가|누굴|누구를|누구야)/u.test(base)){
-    const { subj, particle } = extractSubjectBefore(base, /(누구|누가)/u);
-    if (subj){
-      const p = useParticle(subj, particle);
-      return `소인 아뢰오되, ${subj}${p} 누구인지 모르옵니다요.`;
-    }
-    return `소인 아뢰오되, 누구인지는 소인이 모르옵니다요.`;
-  }
-
-  // 4) 왜(WHY)
-  if (/(왜|이유|원인|까닭)/u.test(base)){
-    // "왜"는 주어가 앞에 없을 때도 많아서, 주어 추출 실패 시 일반형으로
-    const { subj, particle } = extractSubjectBefore(base, /(왜|이유|원인|까닭)/u);
-    if (subj){
-      const p = useParticle(subj, particle);
-      return `소인 아뢰오되, ${subj}${p} 그러한 까닭은 알지 못하옵니다요.`;
-    }
-    return `소인 아뢰오되, 그 까닭은 소인이 알지 못하옵니다요.`;
-  }
-
-  // 5) 어떻게(HOW)
-  if (/(어떻게|방법|하는\s*법|해결|설정|세팅|고쳐)/u.test(base)){
-    const { subj, particle } = extractSubjectBefore(base, /(어떻게|방법|하는\s*법|해결|설정|세팅|고쳐)/u);
-    if (subj){
-      const p = useParticle(subj, particle);
-      return `소인 아뢰오되, ${subj}${p} 어찌 해야 하는지 모르옵니다요.`;
-    }
-    return `소인 아뢰오되, 어찌해야 하는지 소인이 모르옵니다요.`;
-  }
-
-  // 6) 무엇(WHAT) — 정의/의미/뭐야 류
-  if (/(뭐|무엇|뜻|의미|정의|뭔데|뭐야)/u.test(base)){
-    const { subj, particle } = extractSubjectBefore(base, /(뭐|무엇|뜻|의미|정의)/u);
-    if (subj){
-      const p = useParticle(subj, particle);
-      return `소인 아뢰오되, ${subj}${p} 무엇인지 알지 못하옵니다요.`;
-    }
-    return `소인 아뢰오되, 무엇인지는 소인이 알지 못하옵니다요.`;
-  }
-
-  // 육하원칙 단어가 아예 없으면 null → 기존 폴백 사용
+function classifySixW(q){
+  const s = cleanPhrase(q);
+  if (/(어딨|어딨어|어디(에|서)?|어디야|어디있어|위치|장소)/i.test(s)) return "WHERE";
+  if (/(언제|몇\s*시|몇시|날짜|며칠|기간|언제까지|시간|몇\s*월|몇\s*일)/i.test(s)) return "WHEN";
+  if (/(누구|누가|누굴|누구야)/i.test(s)) return "WHO";
+  if (/(왜|이유|원인|까닭|어째서)/i.test(s)) return "WHY";
+  if (/(어떻게|어케|어떡|방법|하는\s*법|해결|설정|세팅|고쳐)/i.test(s)) return "HOW";
+  if (/(뭐|무엇|뜻|의미|정의|뭔데|뭐야|무슨)/i.test(s)) return "WHAT";
   return null;
 }
 
-// ✅ “A는 B야?” → “A는 B이옵니다요.” (컨셉 유지 + 내용 정확히 반영)
-function tryCopulaQAJoseon(raw){
-  const s = (raw || '').trim();
-
-  // 끝 물음표/느낌표 제거
-  const cleaned = s.replace(/[?？!]+$/g, '').trim();
-
-  // 예: "명지대는 명문대야" / "명지대는 명문대이야"
-  const m = cleaned.match(/^(.+?)(은|는)\s*(.+?)\s*(이야|야)$/);
-  if (!m) return null;
-
-  const lhs = m[1].trim();
-  const particle = m[2];     // 은/는
-  const rhs = m[3].trim();   // B
-  if (!lhs || !rhs) return null;
-
-  // 조선 말투로 “단정” (질문 내용을 그대로 확정해서 말함)
-  const answer = `${lhs}${particle} ${rhs}이옵니다요.`;
-
-  // 죄인 컨셉(원하면 '으윽…' 붙이기)
-  return `소인 아뢰오되, ${answer}`;
-  // return `으윽… 소인 아뢰오되, ${answer}`;  // ← 이게 더 죄인맛 나면 이걸로
+function extractTopicBefore(q, keywordRe){
+  const s = cleanPhrase(q);
+  const m = s.match(new RegExp(`^(.+?)\\s*(은|는|이|가)?\\s*${keywordRe.source}`, 'u'));
+  if (!m) return { topic: "", particle: "" };
+  const topic = cleanPhrase(m[1]);
+  const particle = (m[2] || "").trim();
+  if (!topic || STOP_QWORDS.has(topic)) return { topic: "", particle: "" };
+  return { topic, particle };
 }
 
+// ✅ WHERE는 "모르옵니다" 계열로 고정 (원하신 동작)
+function answerBySixW(q){
+  const s = cleanPhrase(q);
+  const type = classifySixW(s);
+  if (!type) return null;
 
-// ✅ "~는/~은 ~야?" 형태는 질문을 '단정문'으로 거울처럼 돌려주기
-function hasJongseong(word){
-  const w = (word || '').trim();
-  if (!w) return false;
-  const ch = w[w.length - 1];
-  const code = ch.charCodeAt(0);
-  if (code < 0xAC00 || code > 0xD7A3) return false;
-  return ((code - 0xAC00) % 28) !== 0; // 받침 있으면 true
+  if (type === "WHERE"){
+    const { topic, particle } = extractTopicBefore(s, /(어딨|어딨어|어디)/u);
+    if (topic){
+      const p = (particle === "은" || particle === "는") ? particle : josa(topic, "은", "는");
+      return `소인 아뢰오되, ${topic}${p} 어디에 있는지 모르옵니다요.`;
+    }
+    return "소인 아뢰오되, 무엇의 위치를 묻는지 모르옵니다요.";
+  }
+
+  if (type === "WHEN"){
+    const { topic, particle } = extractTopicBefore(s, /(언제|몇\s*시|몇시|날짜|기간|며칠|시간)/u);
+    if (topic){
+      const p = (particle === "은" || particle === "는") ? particle : josa(topic, "은", "는");
+      return `소인 아뢰오되, ${topic}${p} 언제인지는 알지 못하옵니다요.`;
+    }
+    return "소인 아뢰오되, 언제인지는 소인이 알지 못하옵니다요.";
+  }
+
+  if (type === "WHO"){
+    const { topic, particle } = extractTopicBefore(s, /(누구|누가)/u);
+    if (topic){
+      const p = (particle === "은" || particle === "는") ? particle : josa(topic, "은", "는");
+      return `소인 아뢰오되, ${topic}${p} 누구인지는 알지 못하옵니다요.`;
+    }
+    return "소인 아뢰오되, 누구인지는 소인이 알지 못하옵니다요.";
+  }
+
+  if (type === "WHY"){
+    return "소인 아뢰오되, 그 까닭은 단정하기 어렵사옵니다요.";
+  }
+
+  if (type === "HOW"){
+    return "소인 아뢰오되, 방법은 하나로 못 박기 어렵사옵니다요.";
+  }
+
+  if (type === "WHAT"){
+    const { topic, particle } = extractTopicBefore(s, /(뭐|무엇|뜻|의미|정의)/u);
+    if (topic){
+      const p = (particle === "은" || particle === "는") ? particle : josa(topic, "은", "는");
+      return `소인 아뢰오되, ${topic}${p} 무엇인지는 알지 못하옵니다요.`;
+    }
+    return "소인 아뢰오되, 무엇인지는 소인이 알지 못하옵니다요.";
+  }
+
+  return null;
 }
 
-function copulaEnding(rhs){
-  // 명문대(받침X) => 야, 대학(받침O) => 이야
-  return hasJongseong(rhs) ? '이야' : '야';
+// ----------------------------
+// “평가/감상” 질문 처리 (잘생겼어? 예뻐? 멋있어? 괜찮아?)
+// → 여기서 잡아주면 "잘생겼어는..." 같은 비문이 사라짐
+// ----------------------------
+const JUDGE_RE = /(잘생겼|예쁘|멋있|귀엽|괜찮|좋|나쁘|맛있|재밌|별로)/i;
+
+function parseJudgementQuestion(q){
+  const s = cleanPhrase(q);
+
+  // "차은우는 잘생겼어" / "차은우 잘생겼어"
+  let m = s.match(/^(.+?)(?:\s*(은|는|이|가))?\s*([가-힣A-Za-z0-9]+)\s*$/u);
+  if (m){
+    const left = cleanPhrase(m[1]);
+    const pred = cleanPhrase(m[3]);
+    if (JUDGE_RE.test(pred)){
+      // left가 너무 길면 첫 토큰만(안정)
+      const subject = stripJosaSuffix(left.split(' ')[0] || left);
+      if (subject && !STOP_QWORDS.has(subject)) return { subject, pred };
+    }
+  }
+
+  // "차은우는 잘생겼어?"처럼 중간에 동사구가 붙는 경우
+  m = s.match(/^(.+?)(?:\s*(은|는|이|가))?\s*(잘생겼|예쁘|멋있|귀엽|괜찮|좋|나쁘|맛있|재밌|별로)/i);
+  if (m){
+    const subject = stripJosaSuffix(m[1]);
+    const pred = m[2] ? m[3] : m[3];
+    if (subject && !STOP_QWORDS.has(subject)) return { subject, pred: m[3] };
+  }
+
+  return null;
 }
 
-function tryCopulaEcho(raw){
-  // 끝 물음표/느낌표만 제거하고 검사
-  const base = String(raw).trim().replace(/[?？!]+$/g, '').trim();
+function answerByJudgement(q){
+  const parsed = parseJudgementQuestion(q);
+  if (!parsed) return null;
 
-  // "A는 B야" / "A는 B이야" 형태만 잡음 (룰보다 약하게: 폴백 직전에만 씀)
-  const m = base.match(/^(.+?)([은는])\s*(.+?)\s*(이야|야)$/);
-  if (!m) return null;
+  const { subject, pred } = parsed;
+  const EN = josa(subject, "은", "는");
 
-  const lhs = m[1].trim();
-  const particle = m[2];
-  const rhs = m[3].trim();
-  if (!lhs || !rhs) return null;
-
-  // 문법상 더 자연스럽게(받침 여부로 야/이야 결정)
-  const end = copulaEnding(rhs);
-
-  // ✅ “정확한 답”: 물음표만 뺀 단정문
-  return `${lhs}${particle} ${rhs}${end}`;
+  // 조선톤 + “그럴듯한” 한 줄 (너무 단정/사실 주장 피하고, ‘평’ 형태)
+  const variants = [
+    `소인 아뢰오되, ${subject}${EN} ${pred}다 평하는 이가 많사옵니다요.`,
+    `소인 아뢰오되, ${subject}${EN} ${pred}다 하는 말이 잦사옵니다요.`,
+    `소인 아뢰오되, ${subject}${EN} 보는 눈마다 다르나, ${pred}다 하는 편이 많사옵니다요.`
+  ];
+  return pickOne(variants);
 }
 
+// ----------------------------
+// 생성형 폴백(룰 미매칭 시) 개선
+// - 동사/형용사 토큰을 키워드에서 제외해서 "잘생겼어는..." 방지
+// ----------------------------
+function isPredicateLikeToken(t){
+  // 형용사/동사 느낌 강한 토큰은 폴백 키워드로 쓰지 않음
+  return /(하겠|하자|해야|해줘|해요|했다|했어|한다|하는|돼|되|있|없|맞|아니|좋|나쁘|잘생겼|예쁘|멋있|귀엽|괜찮|맛있|재밌|별로)/i.test(t);
+}
 
+function extractKeywords(q){
+  const raw = (String(q).match(/[가-힣A-Za-z0-9]+/g) || []).map(s => s.trim()).filter(Boolean);
+  const stop = new Set([
+    "뭐","무엇","왜","어떻게","어떤","가능","되나","돼","되요","해","해줘","해주세요","해야",
+    "추천","방법","하는법","해결","이유","원인","때문","까닭",
+    "언제","어디","누구","얼마","몇","정도","좀","그냥","진짜",
+    "너","나","우리","전하","소인","죄인"
+  ]);
+
+  const scored = raw.map((tok, idx) => {
+    let t = stripJosaSuffix(tok);
+
+    if (!t || t.length < 2) return null;
+    if (stop.has(t.toLowerCase())) return null;
+    if (STOP_QWORDS.has(t)) return null;
+    if (isPredicateLikeToken(t)) return null;
+
+    let score = t.length;
+    if (/(대학교|대학)$/.test(t) || /대$/.test(t)) score += 2;
+    return { t, idx, score };
+  }).filter(Boolean);
+
+  scored.sort((a, b) => (b.score - a.score) || (a.idx - b.idx));
+
+  const out = [];
+  const seen = new Set();
+  for (const it of scored) {
+    if (seen.has(it.t)) continue;
+    seen.add(it.t);
+    out.push(it.t);
+    if (out.length >= 2) break;
+  }
+  return out;
+}
+
+function hallucinatedFallback(question){
+  const q = cleanPhrase(question);
+  const [k1, k2] = extractKeywords(q);
+  const key = k1 || "그 일";
+  const key2 = k2 || "";
+
+  const EUN = josa(key, "은", "는");
+  const GWA = josa(key, "과", "와");
+
+  const isCompare = (/(차이|비교|vs|중에|둘 중|더)/i.test(q) && !!key2);
+  const isShould  = /(할까|해야|괜찮|가능|추천|골라|선택)/.test(q);
+
+  const prefixes = [
+    "소인 아뢰오되,",
+    "으윽…",
+    "듣자 하니,",
+    "짐작컨대,"
+  ];
+
+  let s = "";
+  if (isCompare) {
+    s = `${key}${GWA} ${key2} 중에서는, 대개 ${key} 쪽이 더 무난하옵니다요.`;
+  } else if (isShould) {
+    s = `${key}${EUN} 지금은 그리 하심이 무난하옵니다요.`;
+  } else {
+    // ✅ 기존 "그렇게 굴러가옵니다요" 제거 → 자연스러운 정보부족형
+    s = `${key}${EUN} 단서가 부족하여 단정하기 어렵사옵니다요.`;
+  }
+
+  return oneLine(`${pickOne(prefixes)} ${s}`);
+}
+
+// ----------------------------
+// 최종: geegleAnswer
+// ----------------------------
 function geegleAnswer(rawQuestion){
   const raw = normalizeQ(rawQuestion);
   if (!raw) return pickOne(noQuestionAnswers);
 
-  // 산수 먼저
+  // 1) 산수
   const mathLine = trySimpleMath(raw);
   if (mathLine) return oneLine(mathLine);
 
-  // ✅ “A는 B야?” 같은 문장 먼저 처리(컨셉 유지 + 어색함 제거)
-  const copulaLine = tryCopulaQAJoseon(raw);
-  if (copulaLine) return copulaLine;
+  // 2) 평가/감상(잘생겼어? 등) — "잘생겼어는..." 방지 핵심
+  const judgeLine = answerByJudgement(raw);
+  if (judgeLine) return oneLine(judgeLine);
 
+  // 3) 6W
+  const sixWLine = answerBySixW(raw);
+  if (sixWLine) return oneLine(sixWLine);
+
+  // 4) 룰 매칭
   const low = lowerQ(raw);
-
   for (const rule of A_RULES){
     if (rule.re.test(raw) || rule.re.test(low)){
       const picked = pickOne(rule.replies);
@@ -1653,12 +1553,10 @@ function geegleAnswer(rawQuestion){
     }
   }
 
-  // ✅ 룰에 안 걸렸다면: "A는/은 B야?"는 문장 그대로 단정해서 '그럴듯'하게 보이게
-  const echoed = tryCopulaEcho(raw);
-  if (echoed) return echoed;
-
+  // 5) 최후 폴백
   return hallucinatedFallback(raw);
 }
+
 
 
   // Boot
