@@ -1314,6 +1314,123 @@ function trySimpleMath(raw){
 }
 
 // ----------------------------
+// 6W(육하원칙) / '어떻게'(상태 vs 방법) 선처리
+// - 룰 미스매치 시 말도 안 되는 답(“어디있어를 찾으려면…”) 방지
+// - 외부지식 없이 '모르옵니다' 계열로 안전하게 처리
+// ----------------------------
+function oneLine(text, maxLen = 72){
+  const t = String(text || '').replace(/\s+/g, ' ').trim();
+  return t.length > maxLen ? (t.slice(0, maxLen - 1) + '…') : t;
+}
+function stripEndPunct(s){
+  return String(s || '').trim().replace(/[?？!！.。…]+$/g, '').trim();
+}
+function hasBatchim(word){
+  const w = String(word || '').trim();
+  if (!w) return false;
+  const ch = w[w.length - 1];
+  const code = ch.charCodeAt(0);
+  if (code < 0xAC00 || code > 0xD7A3) return false;
+  return ((code - 0xAC00) % 28) !== 0;
+}
+function josa(word, a, b){ return hasBatchim(word) ? a : b; }
+
+function extractTopicBefore(base, keywordRe){
+  // "X(은/는/이/가) <키워드>" → X 추출
+  const m = base.match(new RegExp(`^(.+?)(?:은|는|이|가)?\\s*${keywordRe.source}`, 'u'));
+  if (!m) return "";
+  return String(m[1] || '').trim().replace(/\s+/g, ' ');
+}
+
+// “A는 B야?” 류(예/아니오) — 외부지식 없이 '단정 어려움'까지 포함
+function parseYesNo(base){
+  // 6W 단어 섞이면 예/아니오로 보지 않음
+  if (/(어디|언제|누구|누가|왜|어떻게|어케|무엇|뭐)/u.test(base)) return null;
+  const m = base.match(/^(.+?)(?:은|는|이|가)?\s*(.+?)\s*(이야|야|인가|인가요|입니까|맞아|맞나요|맞냐|맞니|냐|니)\s*$/u);
+  if (!m) return null;
+  const subject = String(m[1] || '').trim();
+  const pred    = String(m[2] || '').trim();
+  if (!subject || !pred) return null;
+  return { subject, pred };
+}
+
+function answerBy6W(raw){
+  const base = stripEndPunct(normalizeQ(raw));
+  if (!base) return null;
+
+  // ✅ 시간/날짜/요일은 기존 룰(__TIME__/__DATE__/__DOW__)이 더 정확하니 6W 처리에서 제외
+  if (/(몇 ?시|시간 알려|time now|지금 시간)/i.test(base)) return null;
+  if (/(오늘 날짜|며칠|몇월|몇 일|date today|오늘 몇일)/i.test(base)) return null;
+  if (/(요일|무슨 요일|day of week)/i.test(base)) return null;
+
+  // 0) 예/아니오
+  const yn = parseYesNo(base);
+  if (yn){
+    const { subject, pred } = yn;
+    const roll = Math.random();
+    if (roll < 0.34){
+      return `소인 아뢰오되, ${subject}${josa(subject,'은','는')} ${pred}${josa(pred,'이','가')} 맞사옵니다요.`;
+    } else if (roll < 0.67){
+      return `소인 아뢰오되, ${subject}${josa(subject,'은','는')} ${pred}${josa(pred,'이','가')} 아니옵니다요.`;
+    }
+    return `소인 아뢰오되, ${subject}${josa(subject,'은','는')} ${pred}라 단정하기 어렵사옵니다요.`;
+  }
+
+  // 1) 어디(WHERE)
+  if (/(어딨|어딨어|어디\s*(?:에)?)/u.test(base)){
+    const t = extractTopicBefore(base, /(어딨|어딨어|어디)/u);
+    if (t) return `소인 아뢰오되, ${t}${josa(t,'이','가')} 어디에 있는지 모르옵니다요.`;
+    return `소in 아뢰오되, 무엇이 어디에 있는지 소인은 모르옵니다요.`;
+  }
+
+  // 2) 언제(WHEN)
+  if (/(언제|몇\s*시|몇시|며칠|날짜|기간|언제까지|시간)/u.test(base)){
+    const t = extractTopicBefore(base, /(언제|몇\s*시|몇시|며칠|날짜|기간|언제까지|시간)/u);
+    if (t) return `소인 아뢰오되, ${t}${josa(t,'이','가')} 언제인지는 모르옵니다요.`;
+    return `소인 아뢰오되, 언제인지는 소인이 모르옵니다요.`;
+  }
+
+  // 3) 누구(WHO)
+  if (/(누구|누가)/u.test(base)){
+    const t = extractTopicBefore(base, /(누구|누가)/u);
+    if (t) return `소인 아뢰오되, ${t}${josa(t,'이','가')} 누구인지는 모르옵니다요.`;
+    return `소인 아뢰오되, 누구인지는 소인이 모르옵니다요.`;
+  }
+
+  // 4) 왜(WHY)
+  if (/(왜|이유|원인|까닭)/u.test(base)){
+    const t = extractTopicBefore(base, /(왜|이유|원인|까닭)/u);
+    if (t) return `소인 아뢰오되, ${t}${josa(t,'이','가')} 그러한 까닭은 알지 못하옵니다요.`;
+    return `소인 아뢰오되, 그 까닭은 소인이 알지 못하옵니다요.`;
+  }
+
+  // 5) 어떻게(HOW) — '방법' 질문인지, '상태/특성' 질문인지 구분
+  const hasHowWord = /(어떻게|어케)/u.test(base);
+  const hasHowCue  = /(해야|하면|하는\s*법|방법|절차|해결|고쳐|설정|세팅|바꾸|수정|만들|연결|설치|사용|써|적용|가|갈|오|오는|찾아)/u.test(base);
+
+  if (hasHowWord && !hasHowCue){
+    const t = extractTopicBefore(base, /(어떻게|어케)/u);
+    if (t) return `소인 아뢰오되, ${t}${josa(t,'이','가')} 어떠한지는 모르옵니다요.`;
+    return `소인 아뢰오되, 어찌한지는 소인이 모르옵니다요.`;
+  }
+
+  if (/(어떻게|어케|방법|절차)/u.test(base)){
+    const t = extractTopicBefore(base, /(어떻게|어케|방법|절차)/u);
+    if (t) return `소인 아뢰오되, ${t}${josa(t,'이','가')} 어찌 해야 하는지 모르옵니다요.`;
+    return `소인 아뢰오되, 어찌해야 하는지 소인이 모르옵니다요.`;
+  }
+
+  // 6) 무엇(WHAT)
+  if (/(뭐|무엇|뜻|의미|정의|뭔지|뭐야)/u.test(base)){
+    const t = extractTopicBefore(base, /(뭐|무엇|뜻|의미|정의|뭔지|뭐야)/u);
+    if (t) return `소인 아뢰오되, ${t}${josa(t,'이','가')} 무엇인지는 알지 못하옵니다요.`;
+    return `소인 아뢰오되, 무엇인지는 소인이 알지 못하옵니다요.`;
+  }
+
+  return null;
+}
+
+// ----------------------------
 // 6W/예아니오/평가 질문 분류
 // ----------------------------
 const STOP_QWORDS = new Set([
@@ -1322,16 +1439,31 @@ const STOP_QWORDS = new Set([
   '잘생겼어','예뻐','멋있어','귀여워','괜찮아','좋아','나빠'
 ]);
 
+// "어떻게"를 HOW(방법) vs STATE(어떠함)으로 분리
+const HOW_CUE_RE = /(하면|해야|할까|할\s*수|해도|하는\s*법|방법|해결|설정|세팅|고쳐|수정|만들|사용|적용|설치|연결|켜|끄|바꾸|변경|추가|삭제)/i;
+const HOW_WORD_RE = /(어떻게|어케|어떡)/i;
+
 function classifySixW(q){
   const s = cleanPhrase(q);
+
+  // 위치/시간/인물/원인/정의는 기존대로
   if (/(어딨|어딨어|어디(에|서)?|어디야|어디있어|위치|장소)/i.test(s)) return "WHERE";
   if (/(언제|몇\s*시|몇시|날짜|며칠|기간|언제까지|시간|몇\s*월|몇\s*일)/i.test(s)) return "WHEN";
   if (/(누구|누가|누굴|누구야)/i.test(s)) return "WHO";
   if (/(왜|이유|원인|까닭|어째서)/i.test(s)) return "WHY";
-  if (/(어떻게|어케|어떡|방법|하는\s*법|해결|설정|세팅|고쳐)/i.test(s)) return "HOW";
   if (/(뭐|무엇|뜻|의미|정의|뭔데|뭐야|무슨)/i.test(s)) return "WHAT";
+
+  // ✅ "어떻게"는 2갈래로
+  // - HOW_CUE_RE가 있으면 절차/방법(HOW)
+  // - 아니면 상태/모양/성질(STATE)
+  if (HOW_WORD_RE.test(s)) return HOW_CUE_RE.test(s) ? "HOW" : "STATE";
+
+  // "방법/해결/설정..."만 있어도 HOW
+  if (/(방법|하는\s*법|해결|설정|세팅|고쳐|수정)/i.test(s)) return "HOW";
+
   return null;
 }
+
 
 function extractTopicBefore(q, keywordRe){
   const s = cleanPhrase(q);
@@ -1380,8 +1512,13 @@ function answerBySixW(q){
     return "소인 아뢰오되, 그 까닭은 단정하기 어렵사옵니다요.";
   }
 
-  if (type === "HOW"){
-    return "소인 아뢰오되, 방법은 하나로 못 박기 어렵사옵니다요.";
+    if (type === "HOW"){
+    const { topic, particle } = extractTopicBefore(s, /(어떻게|어케|어떡|방법|하는\s*법|해결|설정|세팅|고쳐)/u);
+    if (topic){
+      const p = (particle === "은" || particle === "는") ? particle : josa(topic, "은", "는");
+      return `소인 아뢰오되, ${topic}${p} 어찌 해야 하는지는 알지 못하옵니다요.`;
+    }
+    return "소인 아뢰오되, 어찌 해야 하는지는 소인이 알지 못하옵니다요.";
   }
 
   if (type === "WHAT"){
@@ -1392,6 +1529,7 @@ function answerBySixW(q){
     }
     return "소인 아뢰오되, 무엇인지는 소인이 알지 못하옵니다요.";
   }
+
 
   return null;
 }
@@ -1527,17 +1665,35 @@ function geegleAnswer(rawQuestion){
   const raw = normalizeQ(rawQuestion);
   if (!raw) return pickOne(noQuestionAnswers);
 
-  // 1) 산수
+  // 1) 산수 먼저
   const mathLine = trySimpleMath(raw);
   if (mathLine) return oneLine(mathLine);
 
-  // 2) 평가/감상(잘생겼어? 등) — "잘생겼어는..." 방지 핵심
-  const judgeLine = answerByJudgement(raw);
-  if (judgeLine) return oneLine(judgeLine);
+  // 2) 평가/감상(잘생겼어? 등) — 있으면 사용
+  if (typeof answerByJudgement === 'function') {
+    const judgeLine = answerByJudgement(raw);
+    if (judgeLine) return oneLine(judgeLine);
+  }
 
-  // 3) 6W
-  const sixWLine = answerBySixW(raw);
-  if (sixWLine) return oneLine(sixWLine);
+  // ✅ 2.5) "어떻게"가 들어가도 '방법/조언'으로 빠지지 않게 선차단
+  // - "어떻게" + 절차/방법 cue(해야/설정/고쳐/만들/연결/설치/사용/적용/가다/찾다...)가 없으면
+  //   => 상태/특성 질문(=어떠한가)으로 보고 '모르옵니다' 한 줄로 처리
+  const base = raw.replace(/[?？!！.。…]+$/g, '').trim();
+  const hasHowWord = /(어떻게|어케|어떡)/.test(base);
+  const hasHowCue  = /(해야|하면|해도|하는\s*법|방법|절차|해결|고쳐|수정|설정|세팅|바꾸|변경|만들|제작|연결|설치|사용|써|적용|가는\s*법|가려|가야|가면|가|갈|오|오는|찾아|찾는\s*법)/.test(base);
+
+  if (hasHowWord && !hasHowCue) {
+    const m = base.match(/^(.+?)(?:은|는|이|가)?\s*(?:어떻게|어케|어떡)/);
+    const topic = m ? m[1].trim() : '';
+    if (topic) return oneLine(`소인 아뢰오되, ${topic}${josa(topic,'은','는')} 어떠한지는 모르옵니다요.`);
+    return oneLine(`소인 아뢰오되, 어찌한지는 소인이 모르옵니다요.`);
+  }
+
+  // 3) 6W — 있으면 사용(없으면 스킵)
+  if (typeof answerBy6W === 'function') {
+    const sixWLine = answerBy6W(raw);
+    if (sixWLine) return oneLine(sixWLine);
+  }
 
   // 4) 룰 매칭
   const low = lowerQ(raw);
@@ -1554,8 +1710,9 @@ function geegleAnswer(rawQuestion){
   }
 
   // 5) 최후 폴백
-  return hallucinatedFallback(raw);
+  return oneLine(hallucinatedFallback(raw));
 }
+
 
 
 
