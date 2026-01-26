@@ -100,6 +100,21 @@ button, .search-btn, .clear-btn { cursor: pointer; }
 body.input-active{ cursor: auto !important; }
 body.input-active #iron-cursor{ display:none !important; }
 
+/* ✅ JS 오류/누락 대비: 입력창 포커스/호버 시 기본 커서 + 인두 커서 숨김(지원 안 되는 브라우저는 자동 무시됨) */
+body:has(#question-input:focus){ cursor:auto !important; }
+body:has(#question-input:focus) #iron-cursor{ display:none !important; }
+
+body:has(#question-input:hover),
+body:has(.search-btn:hover),
+body:has(.clear-btn:hover){
+  cursor:auto !important;
+}
+body:has(#question-input:hover) #iron-cursor,
+body:has(.search-btn:hover) #iron-cursor,
+body:has(.clear-btn:hover) #iron-cursor{
+  display:none !important;
+}
+
 /* ===== 상단 설정 버튼 ===== */
 .settings-btn-container{
   position: fixed;
@@ -269,10 +284,6 @@ body.input-active #iron-cursor{ display:none !important; }
   -webkit-user-drag:none;
   filter: var(--logo-filter); /* if not work, var(--logo-filter) -> none */
 }
-
-.geegle-logo-container,
-.geegle-logo-stack,
-
 
 /* ===== 검색 영역 ===== */
 .search-area{
