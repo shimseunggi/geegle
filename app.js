@@ -389,7 +389,7 @@
     const STEPS = [
       {
         title: '하문을 적으시오',
-        desc:  '검색창에 질문을 적고 “지글 검색”을 누르시오.',
+        desc:  '검색창에 질문을 적으시오.',
         target: '#question-input',
       },
       {
