@@ -31,7 +31,12 @@
   --footer-border: #dadce0;
   --footer-text: #70757a;
   --footer-hover: rgba(60,64,67,0.08);
-  --footer-safe: 56px;
+  --footer-safe: 0px;            /* footer가 실제로 겹칠 때만 JS가 값 넣음 */--safe-bottom: 0px;            /* iOS safe-area 대응용 */
+
+}
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  :root { --safe-bottom: env(safe-area-inset-bottom); }
 }
 
 [data-theme="dark"]{
@@ -1128,7 +1133,7 @@ body.settings-active #question-input{ cursor: text; }
   .layout-row > .item-wrapper:first-child{
     position: fixed;
     left: 12px;
-    bottom: calc(12px + var(--footer-safe));
+    bottom: calc(12px + var(--safe-bottom) + var(--footer-safe));
     z-index: 9990;
     transform: scale(0.58);
     transform-origin: left bottom;
