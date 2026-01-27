@@ -585,12 +585,24 @@ body:has(.clear-btn:hover) #iron-cursor{
 
 /* ===== 죄인 ===== */
 #person-container{
+  position: relative;       /* absolute 자식 기준 */
+  width: 320px;
+  height: 360px;            /* ✅ 죄인이 항상 같은 높이 박스 안에 있게 */
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* ✅ 죄인은 항상 아래쪽에 붙여 고정 */
+  align-items: center;
+  gap: 0;                   /* ✅ 말풍선/링크는 absolute라 gap 불필요 */
+}
+
+#person-container{
   width:200px;
   min-height:320px;
   position:relative;
   cursor:pointer;
   display:flex;
-  justify-content:flex-end;
+  justify-content:flex-start;
   align-items:center;
   flex-direction: column;
   gap: 12px;
@@ -733,39 +745,50 @@ body:has(.clear-btn:hover) #iron-cursor{
 
 /* 말풍선 */
 #answer-bubble{
-  visibility:hidden;
-  position:relative;
-  width: min(260px, 70vw);
-  max-height: 170px;
+  display:none;          /* ✅ 기본은 공간도 차지하지 않게 */
+  position: relative;
+  max-width: 520px;
   padding: 14px 16px;
-  background: var(--surface);
-  color: var(--text-color);
   border-radius: 18px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-2);
-
-  font-size: 15px;
-  font-weight: 900;
-  line-height: 1.45;
-  text-align: center;
-  z-index: 100;
-  pointer-events:none;
-
-  font-family: 'Gungsuh', serif;
-}
-#answer-bubble::after{
-  content:'';
-  position:absolute;
-  left: 50%;
-  bottom: -9px;
-  width: 16px;
-  height: 16px;
   background: var(--surface);
-  border-right: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  transform: translateX(-50%) rotate(45deg);
-  box-shadow: 6px 6px 14px rgba(0,0,0,0.06);
+  border: 1px solid var(--outline);
+  box-shadow: var(--shadow-2);
+  font-size: 14px;
+  line-height: 1.4;
+  user-select: none;
+  text-align: center;
+  pointer-events: none;
+
+  /* ✅ 기본은 숨김(visibility 말고 opacity로) */
+  opacity: 0;
+  transform: translateY(6px) scale(.98);
+  transition: opacity .15s ease, transform .15s ease;
+  display: block; /* ✅ display로 죽어있던 경우 방지 */
 }
+
+/* ✅ 내용이 생기는 순간(= 답변이 들어오는 순간) 자동으로 보여주기 */
+#answer-bubble:not(:empty){
+  display:block;
+}
+
+#answer-bubble.show{
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+#answer-bubble::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:-10px;
+  transform: translateX(-50%);
+  width:0; height:0;
+  border-left:10px solid transparent;
+  border-right:10px solid transparent;
+  border-top:10px solid var(--surface);
+  filter: drop-shadow(0 -1px 0 var(--outline));
+}
+
 
 /* ✅ B버전: 답변 근거 링크(검색) 칩 */
 .answer-links{
@@ -800,7 +823,7 @@ body:has(.clear-btn:hover) #iron-cursor{
   position:absolute;
   border-radius:50%;
   pointer-events:none;
-  z-index:9999;
+  z-index:60;
   filter: blur(5px);
   animation: smokeRise 2.5s forwards ease-out;
 }
