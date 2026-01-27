@@ -855,6 +855,54 @@ body:has(.clear-btn:hover) #iron-cursor{
   100% { opacity: 0;    filter: blur(7px) brightness(0.7);  transform: rotate(30deg) scale(0.95); }
 }
 
+/* 불티(embers) */
+.ember-particle{
+  position:absolute;
+  width:6px; height:6px;
+  border-radius:50%;
+  pointer-events:none;
+  z-index:70;
+  background: radial-gradient(circle,
+    rgba(255,240,200,1) 0%,
+    rgba(255,120,0,0.95) 55%,
+    rgba(80,0,0,0) 75%);
+  opacity: 0.9;
+  animation: emberFly 1.05s ease-out forwards;
+  transform: translate(-50%, -50%) scale(var(--s, 1));
+}
+
+@keyframes emberFly{
+  0%{
+    opacity: .9;
+    transform: translate(-50%,-50%) translate(0,0) scale(var(--s,1));
+  }
+  100%{
+    opacity: 0;
+    transform: translate(-50%,-50%) translate(var(--dx, 0px), var(--dy, -140px))
+      scale(calc(var(--s,1) * 0.25));
+  }
+}
+
+/* 열기 강도(heatCharge)를 커서에 반영 */
+#iron-cursor{ --heat-charge: 0; }
+
+#iron-cursor.heated::after{
+  content:"";
+  position:absolute;
+  left:-6px;
+  top:-10px;
+  width:90px;
+  height:70px;
+  pointer-events:none;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 55%,
+    rgba(255,120,0,0.65),
+    rgba(255,40,0,0.15) 55%,
+    rgba(255,40,0,0) 75%);
+  filter: blur(10px);
+  opacity: calc(0.15 + 0.65 * var(--heat-charge));
+}
+
 /* 설정/설명 모달 활성화 시 */
 body.settings-active{ cursor: default !important; }
 body.settings-active #iron-cursor{ display:none !important; }
