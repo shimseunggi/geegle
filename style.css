@@ -1350,29 +1350,59 @@ body:has(.clear-btn:hover) #iron-cursor{
   100%{ opacity: 0; transform: translate(-50%, -180px) scale(2.5) rotate(20deg); background: rgba(255,255,255,0); }
 }
 
-/* 화상자국 */
+/* 화상자국 (네모 아티팩트 방지 버전) */
 .burn-mark{
   position:absolute;
   width:60px; height:45px;
+
+  /* ✅ 모양은 wrapper가 책임지고 */
   clip-path: polygon(0 50%, 100% 0, 100% 100%);
+  overflow: hidden; /* ✅ blur가 사각으로 새는 걸 차단 */
+
+  pointer-events:none;
+  z-index:50;
+  mix-blend-mode: multiply;
+
+  transform-origin:center;
+  transform: rotate(30deg);
+  opacity: 0.9;
+
+  /* ✅ blur는 wrapper에서 제거 */
+  background: transparent;
+  filter: none;
+
+  animation: burnFadeOut 8s ease-out forwards;
+}
+
+/* ✅ 실제 불탄 질감(그라데이션+블러)은 내부 pseudo가 담당 */
+.burn-mark::before{
+  content:"";
+  position:absolute;
+
+  /* blur가 자연스럽게 퍼지도록 약간 크게 */
+  inset:-12px;
+
   background: radial-gradient(circle at 30% 50%,
     rgba(255,255,200,1) 0%,
     rgba(255,100,0,0.9) 40%,
     rgba(100,0,0,0.85) 80%);
-  transform-origin:center;
-  transform: rotate(30deg);
-  pointer-events:none;
-  z-index:50;
+
   filter: blur(4px);
-  opacity: 0.9;
-  mix-blend-mode: multiply;
-  animation: burnFadeOut 8s ease-out forwards;
+  animation: burnInner 8s ease-out forwards;
 }
+
 @keyframes burnFadeOut{
-  0%   { opacity: 0.95; filter: blur(3px) brightness(1.1); transform: rotate(30deg) scale(1.05); }
-  60%  { opacity: 0.85; filter: blur(4px) brightness(0.95); transform: rotate(30deg) scale(1.0); }
-  100% { opacity: 0;    filter: blur(7px) brightness(0.7);  transform: rotate(30deg) scale(0.95); }
+  0%   { opacity: 0.95; transform: rotate(30deg) scale(1.05); }
+  60%  { opacity: 0.85; transform: rotate(30deg) scale(1.0); }
+  100% { opacity: 0;    transform: rotate(30deg) scale(0.95); }
 }
+
+@keyframes burnInner{
+  0%   { filter: blur(3px) brightness(1.1); }
+  60%  { filter: blur(4px) brightness(0.95); }
+  100% { filter: blur(7px) brightness(0.7); }
+}
+
 
 /* 불티(embers) */
 .ember-particle{
