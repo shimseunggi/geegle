@@ -488,6 +488,66 @@ const spawnEmber = (clientX, clientY) => {
   })();
 
   // ----------------------------
+  // LayoutDock (mobile bottom docking for firepit)
+  // - When footer is visible: lift by visible footer height
+  // - When keyboard / visualViewport shrinks: lift by vv bottom offset
+  // ----------------------------
+  const LayoutDock = (() => {
+    const root = document.documentElement;
+    const footer = qs('.g-footer');
+
+    let rafId = 0;
+
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+    const viewportH = () => (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+
+    const getVvBottom = () => {
+      const vv = window.visualViewport;
+      if (!vv) return 0;
+      // layout viewport bottom that is not visible (keyboard, bars, etc.)
+      const bottom = window.innerHeight - (vv.height + vv.offsetTop);
+      return Math.max(0, Math.round(bottom));
+    };
+
+    const getFooterVisibleH = () => {
+      if (!footer) return 0;
+      const r = footer.getBoundingClientRect();
+      const vh = viewportH();
+
+      // footer가 화면 아래쪽에 “보이는 만큼만” 계산
+      const visible = vh - r.top; // footer top이 화면 아래로부터 얼마나 올라왔는지
+      return clamp(Math.round(visible), 0, Math.round(r.height));
+    };
+
+    const update = () => {
+      rafId = 0;
+      const offset = getVvBottom() + getFooterVisibleH();
+      root.style.setProperty('--footer-safe', offset + 'px');
+    };
+
+    const requestUpdate = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(update);
+    };
+
+    const init = () => {
+      requestUpdate();
+
+      window.addEventListener('scroll', requestUpdate, { passive: true });
+      window.addEventListener('resize', requestUpdate, { passive: true });
+      window.addEventListener('orientationchange', () => setTimeout(requestUpdate, 50), { passive: true });
+      window.addEventListener('load', requestUpdate, { once: true });
+
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', requestUpdate, { passive: true });
+        window.visualViewport.addEventListener('scroll', requestUpdate, { passive: true });
+      }
+    };
+
+    return { init, requestUpdate };
+  })();
+
+  // ----------------------------
   // Tutorial (10s onboarding) — B안
   // ----------------------------
   const Tutorial = (() => {
@@ -965,6 +1025,7 @@ Bubble.show('으아아악!!!', 700);
     Heat.init();
     Cursor.init();
     Tutorial.init();
+    LayoutDock.init()
     Layout.init();
 
     // UI bindings
