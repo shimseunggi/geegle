@@ -214,6 +214,42 @@
   // ----------------------------
   const Heat = (() => {
     const HEAT_DURATION_MS = 5000;
+    const HEAT_CHARGE_UP_MS = 650;     // 화로 위에서 강도 차오르는 속도
+const HEAT_CHARGE_DOWN_MS = 1100;  // 화로 밖에서 강도 식는 속도
+const EMBER_INTERVAL_MS = 120;     // 불티 생성 간격
+
+let heatCharge = 0;
+let lastTs = performance.now();
+let lastEmberAt = 0;
+
+const particlesOn = () => document.documentElement.dataset.fxParticles !== '0';
+
+const setHeatCharge = (v) => {
+  heatCharge = Math.max(0, Math.min(1, v));
+  EL.cursor?.style.setProperty('--heat-charge', heatCharge.toFixed(3));
+  EL.brandIron?.style.setProperty('--heat-charge', heatCharge.toFixed(3));
+};
+
+const spawnEmber = (clientX, clientY) => {
+  if (!particlesOn()) return;
+
+  const e = document.createElement('div');
+  e.className = 'ember-particle';
+
+  const pageX = clientX + window.scrollX;
+  const pageY = clientY + window.scrollY;
+
+  e.style.left = (pageX + (Math.random() - 0.5) * 28) + 'px';
+  e.style.top  = (pageY + (Math.random() - 0.5) * 18) + 'px';
+
+  e.style.setProperty('--dx', ((Math.random() - 0.5) * 140).toFixed(1) + 'px');
+  e.style.setProperty('--dy', (-(80 + Math.random() * 140)).toFixed(1) + 'px');
+  e.style.setProperty('--s',  (0.6 + Math.random() * 1.2).toFixed(2));
+
+  document.body.appendChild(e);
+  setTimeout(() => e.remove(), 1200);
+};
+
 
     let heated = false;
     let inFirePrev = false;
@@ -271,10 +307,15 @@
     };
 
     const coolDown = () => {
-      setHeated(false);
-      stopTimers();
-      hideGauge();
-    };
+  setHeated(false);
+  stopTimers();
+  hideGauge();
+
+  // ✅ 추가
+  setHeatCharge(0);
+  EL.firePit?.classList.remove('in-fire');
+};
+
 
     const startCooldown = () => {
       stopTimers();
@@ -316,17 +357,34 @@
     };
 
     const stepWithPointer = (x, y) => {
-      const nowInFire = isInsideFire(x, y);
+  const now = performance.now();
+  const dt = Math.min(64, now - lastTs);
+  lastTs = now;
 
-      if (nowInFire) {
-        holdOnFire();
-      } else {
-        // Leaving moment: start countdown once
-        if (inFirePrev && heated) startCooldown();
-      }
+  const nowInFire = isInsideFire(x, y);
 
-      inFirePrev = nowInFire;
-    };
+  // ✅ 화로 위/밖 heat 강도 변화
+  if (nowInFire) setHeatCharge(heatCharge + dt / HEAT_CHARGE_UP_MS);
+  else setHeatCharge(heatCharge - dt / HEAT_CHARGE_DOWN_MS);
+
+  // ✅ 화로 위 상태 클래스(숯불 강조 등에 활용 가능)
+  EL.firePit?.classList.toggle('in-fire', nowInFire);
+
+  // ✅ 불티: 화로 위에 있을 때 일정 간격으로 생성
+  if (nowInFire && (now - lastEmberAt) > EMBER_INTERVAL_MS) {
+    spawnEmber(x, y);
+    lastEmberAt = now;
+  }
+
+  if (nowInFire) {
+    holdOnFire();
+  } else {
+    if (inFirePrev && heated) startCooldown();
+  }
+
+  inFirePrev = nowInFire;
+};
+
 
     const igniteForMobileTap = () => {
       // Mobile: tap firepit => ignite + start countdown
@@ -384,13 +442,16 @@
       document.body.classList.contains('input-active');
 
     const rafLoop = () => {
-      if (!isBlocked() && pointer.dirty) {
-        pointer.dirty = false;
-        setCursorPos(pointer.clientX, pointer.clientY);
-        Heat.stepWithPointer(pointer.clientX, pointer.clientY);
-      }
-      requestAnimationFrame(rafLoop);
-    };
+  if (!isBlocked()) {
+    if (pointer.dirty) {
+      pointer.dirty = false;
+      setCursorPos(pointer.clientX, pointer.clientY);
+    }
+    // ✅ 매 프레임 heat 판정/이펙트 갱신 (가만히 올려놔도 불티 나오게)
+    Heat.stepWithPointer(pointer.clientX, pointer.clientY);
+  }
+  requestAnimationFrame(rafLoop);
+};
 
     const onMove = (e) => {
       if (isBlocked()) return;
