@@ -1,4 +1,4 @@
-# 🔥 Geegle (지글) - 인류 역사상 최고의 검색 
+# 🔥 Geegle (지글) - 인류 역사상 최고의 검색 엔진
 
 <p align="center">
   <img src="https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white"/>
