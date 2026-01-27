@@ -1536,7 +1536,7 @@ function classifySixW(q){
 }
 
 
-function extractTopicBefore(q, keywordRe){
+function extractTopicBeforeObj(q, keywordRe){
   const s = cleanPhrase(q);
   const m = s.match(new RegExp(`^(.+?)\\s*(은|는|이|가)?\\s*${keywordRe.source}`, 'u'));
   if (!m) return { topic: "", particle: "" };
@@ -1553,7 +1553,7 @@ function answerBySixW(q){
   if (!type) return null;
 
   if (type === "WHERE"){
-    const { topic, particle } = extractTopicBefore(s, /(어딨|어딨어|어디)/u);
+    const { topic, particle } = extractTopicBeforeObj(s, /(어딨|어딨어|어디)/u);
     if (topic){
       const p = (particle === "은" || particle === "는") ? particle : josa(topic, "은", "는");
       return `소인 아뢰오되, ${topic}${p} 어디에 있는지 모르옵니다요.`;
