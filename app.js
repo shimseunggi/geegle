@@ -616,27 +616,29 @@
   // Bubble helpers + effects
   // ----------------------------
   const Bubble = (() => {
-    let tHide = null;
+  let tHide = null;
 
-    const show = (text, ms = 2400) => {
-      if (!EL.bubble) return;
-      EL.bubble.textContent = text;
-      EL.bubble.style.visibility = 'visible';
+  const show = (text, ms = 2400) => {
+    if (!EL.bubble) return;
+    EL.bubble.textContent = oneLine(text);
+    EL.bubble.classList.add("show");
+    // ✅ 혹시 다른 CSS에서 display:none 걸려있어도 강제로 살림
+    EL.bubble.style.display = "block";
 
-      if (tHide) clearTimeout(tHide);
-      tHide = setTimeout(() => {
-        EL.bubble && (EL.bubble.style.visibility = 'hidden');
-      }, ms);
-    };
+    clearTimeout(tHide);
+    tHide = setTimeout(hide, ms);
+  };
 
-    const hide = () => {
-      if (!EL.bubble) return;
-      EL.bubble.style.visibility = 'hidden';
-      if (tHide) { clearTimeout(tHide); tHide = null; }
-    };
+  const hide = () => {
+    if (!EL.bubble) return;
+    EL.bubble.classList.remove("show");
+  };
 
-    return { show, hide };
-  })();
+  return { show, hide };
+})();
+
+
+
 
   const Effects = (() => {
     const smoke = (pageX, pageY) => {
@@ -803,13 +805,18 @@
         pageY: e.clientY + window.scrollY,
       };
 
-      Effects.smoke(p.pageX, p.pageY);
+      Bubble.show("으아아악!!!", 600);
+
+      try {
+  Effects.smoke(p.pageX, p.pageY);
+} catch (e) {
+  console.error(e);
+}
+
 
       // Immediate scream
-      if (EL.bubble) {
-        EL.bubble.style.visibility = 'visible';
-        EL.bubble.textContent = '으아아악!!!';
-      }
+Bubble.show('으아아악!!!', 700);
+
 
       // Burning consumes heat immediately
       Heat.coolDown();
@@ -836,11 +843,12 @@
     EL.bubble.style.visibility = 'visible';
   }
 
-  setTimeout(() => {
-    EL.sinner.classList.remove('pain');
-    if (painFailSafe) { clearTimeout(painFailSafe); painFailSafe = null; }
-    Bubble.show(pick, 3200);
-  }, 450);
+  Bubble.show(pick, 3200);
+  
+  setTimeout(() => {EL.sinner.classList.remove('pain');
+  if (painFailSafe) {clearTimeout(painFailSafe); painFailSafe = null;}
+}, 450);
+
 
   answerTimer = null;
 }, 520);
