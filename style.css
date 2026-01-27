@@ -385,7 +385,7 @@ body:has(.clear-btn:hover) #iron-cursor{
   display:flex;
   flex-direction: row;
   gap: 80px;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
   flex-wrap: wrap;
   margin: 10px 0 30px;
@@ -584,17 +584,6 @@ body:has(.clear-btn:hover) #iron-cursor{
 #iron-cursor.heated .iron-rod{ background: linear-gradient(90deg, #ff2400 0%, #cc3300 30%, #333 70%); }
 
 /* ===== 죄인 ===== */
-#person-container{
-  position: relative;       /* absolute 자식 기준 */
-  width: 320px;
-  height: 360px;            /* ✅ 죄인이 항상 같은 높이 박스 안에 있게 */
-  margin-top: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end; /* ✅ 죄인은 항상 아래쪽에 붙여 고정 */
-  align-items: center;
-  gap: 0;                   /* ✅ 말풍선/링크는 absolute라 gap 불필요 */
-}
 
 #person-container{
   width:200px;
@@ -602,12 +591,16 @@ body:has(.clear-btn:hover) #iron-cursor{
   position:relative;
   cursor:pointer;
   display:flex;
-  justify-content:flex-start;
-  align-items:center;
   flex-direction: column;
+
+  /* ✅ 말 안할 때(죄인) / 말할 때(말풍선) 둘 다 컨테이너 맨 위에서 시작 */
+  justify-content:flex-start;
+
+  align-items:center;
   gap: 12px;
   -webkit-tap-highlight-color: transparent;
 }
+
 .person-group{
   position:relative;
   margin-bottom: 20px;
@@ -745,7 +738,6 @@ body:has(.clear-btn:hover) #iron-cursor{
 
 /* 말풍선 */
 #answer-bubble{
-  display:none;          /* ✅ 기본은 공간도 차지하지 않게 */
   position: relative;
   max-width: 520px;
   padding: 14px 16px;
@@ -759,22 +751,19 @@ body:has(.clear-btn:hover) #iron-cursor{
   text-align: center;
   pointer-events: none;
 
-  /* ✅ 기본은 숨김(visibility 말고 opacity로) */
+  /* ✅ 기본은 완전히 숨김(레이아웃도 차지 X) */
+  display: none;
   opacity: 0;
   transform: translateY(6px) scale(.98);
   transition: opacity .15s ease, transform .15s ease;
-  display: block; /* ✅ display로 죽어있던 경우 방지 */
-}
-
-/* ✅ 내용이 생기는 순간(= 답변이 들어오는 순간) 자동으로 보여주기 */
-#answer-bubble:not(:empty){
-  display:block;
 }
 
 #answer-bubble.show{
+  display: block;
   opacity: 1;
   transform: translateY(0) scale(1);
 }
+
 
 #answer-bubble::after{
   content:"";
