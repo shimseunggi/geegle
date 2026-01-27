@@ -622,8 +622,6 @@
     if (!EL.bubble) return;
     EL.bubble.textContent = oneLine(text);
     EL.bubble.classList.add("show");
-    // ✅ 혹시 다른 CSS에서 display:none 걸려있어도 강제로 살림
-    EL.bubble.style.display = "block";
 
     clearTimeout(tHide);
     tHide = setTimeout(hide, ms);
