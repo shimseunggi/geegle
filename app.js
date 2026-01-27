@@ -800,8 +800,91 @@ const spawnEmber = (clientX, clientY) => {
   return { show, hide };
 })();
 
+// ----------------------------
+  // Sound Controller (Web Audio API)
+  // - mp3 파일 없이 브라우저 내장 신디사이저로 '치익' 소리 생성
+  // ----------------------------
+  const Sound = (() => {
+    let ctx = null;
+    let enabled = true;
 
+    // 오디오 컨텍스트 초기화 (사용자 인터랙션 이후에 시작되어야 함)
+    const initCtx = () => {
+      if (!ctx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        ctx = new AudioContext();
+      }
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+    };
 
+    // 노이즈 버퍼 생성 (치익 소리의 원료)
+    const createNoiseBuffer = () => {
+      if (!ctx) return null;
+      const bufferSize = ctx.sampleRate * 2; // 2초 분량
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1; // 화이트 노이즈
+      }
+      return buffer;
+    };
+
+    let noiseBuffer = null;
+
+    // 🔥 '치익' 소리 재생 함수
+    const playSizzle = (duration = 1.0) => {
+      if (!enabled) return;
+      initCtx();
+      if (!noiseBuffer) noiseBuffer = createNoiseBuffer();
+
+      const src = ctx.createBufferSource();
+      src.buffer = noiseBuffer;
+
+      // 필터 (소리를 좀 더 부드럽고 '타는 소리'처럼 만듦)
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 1000; // 고음 깎기
+
+      // 볼륨 조절 (점점 작아지게)
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.5, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+
+      // 연결: 소스 -> 필터 -> 볼륨 -> 스피커
+      src.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      src.start();
+      src.stop(ctx.currentTime + duration);
+    };
+
+    // 🔊 비명 소리 (간단한 신디사이저 톱니파)
+    const playScream = () => {
+      if (!enabled) return;
+      initCtx();
+      
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sawtooth'; // 찢어지는 듯한 소리 파형
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.6); // 음이 급격히 떨어짐 (으아악!)
+
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.6);
+    };
+
+    return { playSizzle, playScream, initCtx };
+  })();
 
   const Effects = (() => {
     const smoke = (pageX, pageY) => {
@@ -957,6 +1040,9 @@ const burnMarkLocal = (localX, localY) => {
       if (burnTimer) { clearTimeout(burnTimer); burnTimer = null; }
       if (answerTimer) { clearTimeout(answerTimer); answerTimer = null; }
       if (painFailSafe) { clearTimeout(painFailSafe); painFailSafe = null; }
+
+      // ✅ 사용자 인터랙션 시 오디오 엔진 깨우기 (필수)
+      Sound.initCtx();
 
       EL.sinner.classList.remove('pain');
 
