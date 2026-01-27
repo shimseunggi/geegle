@@ -95,6 +95,50 @@
   };
 
   // ----------------------------
+  // Layout: footer가 화면에 보일 때만 화로를 위로 올리기
+  // ----------------------------
+  const Layout = (() => {
+    const footer = qs('.g-footer');
+
+    const setFooterSafe = (px) => {
+      document.documentElement.style.setProperty('--footer-safe', `${px}px`);
+    };
+
+    const syncFooterSafe = () => {
+      // 모바일에서만 의미가 있으니, 데스크톱은 0으로 고정
+      if (!isMobile() || !footer) {
+        setFooterSafe(0);
+        return;
+      }
+
+      const rect = footer.getBoundingClientRect();
+
+      // iOS 주소창/키보드 등으로 실제 보이는 뷰포트가 달라질 수 있어 visualViewport 우선
+      const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+
+      // footer가 화면 하단에 "겹쳐서 보이는 높이"만큼만 안전 여백으로 사용
+      const overlap = Math.min(rect.height, Math.max(0, vh - rect.top));
+
+      setFooterSafe(Math.round(overlap));
+    };
+
+    const init = () => {
+      syncFooterSafe();
+
+      window.addEventListener('scroll', syncFooterSafe, { passive: true });
+      window.addEventListener('resize', syncFooterSafe);
+
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', syncFooterSafe);
+        window.visualViewport.addEventListener('scroll', syncFooterSafe);
+      }
+    };
+
+    return { init, syncFooterSafe };
+  })();
+
+
+  // ----------------------------
   // Overlay (modal) manager
   // ----------------------------
   const Overlay = (() => {
@@ -860,6 +904,7 @@ Bubble.show('으아아악!!!', 700);
     Heat.init();
     Cursor.init();
     Tutorial.init();
+    Layout.init();
 
     // UI bindings
     bindSettings();
