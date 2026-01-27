@@ -83,7 +83,8 @@ body{
   -webkit-overflow-scrolling: touch;
   transition: background-color .25s ease, color .25s ease;
 
-  padding-bottom: calc(40px + var(--footer-safe));
+  position: relative;
+  padding-bottom: 0;
 }
 
 /* 입력/버튼 위에서는 기본 커서 유지 */
@@ -116,12 +117,15 @@ body:has(.clear-btn:hover) #iron-cursor{
 }
 
 /* ===== 상단 설정 버튼 ===== */
+/* ===== 상단 설정 버튼 : 로고/검색창 컬럼 기준으로 고정 ===== */
 .settings-btn-container{
-  position: fixed;
+  position: absolute; /* ✅ 스크롤하면 같이 움직임(로고처럼) */
   top: 14px;
   right: 14px;
   z-index: 11000;
 }
+
+
 
 .g-icon-btn{
   width: 40px;
@@ -857,21 +861,23 @@ body.settings-active #question-input{ cursor: text; }
   *{ animation: none !important; transition: none !important; }
 }
 
-/* footer */
+/* footer (A안: 바는 전체폭, 내용만 컬럼 정렬) */
 .g-footer{
-  position: fixed;
-  left: 0; right: 0; bottom: 0;
+  position: relative;      /* ✅ 스크롤하면 같이 움직임 */
+  width: 100%;
+  margin-top: auto;        /* ✅ 내용이 짧으면 '첫 화면' 아래에 붙어 보이게 */
   z-index: 9000;
   background: var(--footer-bg);
   border-top: 1px solid var(--footer-border);
 }
+
+
+
 .g-footer-country{
+  width: min(680px, 92vw); /* ✅ 로고/검색과 동일 컬럼 폭 */
   padding: 14px 30px;
-  font-size: 15px;
-  line-height: 1;
-  color: var(--footer-text);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", Arial, sans-serif;
 }
+
 .g-footer-country .g-footer-link{
   appearance: none;
   border: 0;
@@ -1111,7 +1117,7 @@ body.settings-active #question-input{ cursor: text; }
 
 /* 모바일 */
 @media (max-width: 768px){
-  body{ padding-bottom: calc(140px + var(--footer-safe)); }
+  body{ padding-bottom: 0; }
   .geegle-logo-container{ margin-top: 7vh; }
   #question-input{ font-size: 16px; }
   .layout-row{
