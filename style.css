@@ -1261,7 +1261,11 @@ body:has(.clear-btn:hover) #iron-cursor{
 
 /* 말풍선 */
 #answer-bubble{
-  position: relative;
+  position: absolute;      /* ✅ 레이아웃에서 제외 */
+  top: 0;
+  left: 50%;
+  z-index: 60;
+
   max-width: 520px;
   padding: 14px 16px;
   border-radius: 18px;
@@ -1274,18 +1278,19 @@ body:has(.clear-btn:hover) #iron-cursor{
   text-align: center;
   pointer-events: none;
 
-  /* ✅ 기본은 완전히 숨김(레이아웃도 차지 X) */
+  /* 기존 숨김/등장 효과 유지 (X축 가운데정렬 포함) */
   display: none;
   opacity: 0;
-  transform: translateY(6px) scale(.98);
+  transform: translate(-50%, 6px) scale(.98);
   transition: opacity .15s ease, transform .15s ease;
 }
 
 #answer-bubble.show{
   display: block;
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translate(-50%, 0) scale(1);
 }
+
 
 
 #answer-bubble::after{
