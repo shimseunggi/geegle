@@ -828,22 +828,36 @@ const spawnEmber = (clientX, clientY) => {
     };
 
     const burnMark = (clientX, clientY) => {
-      if (!EL.person) return;
-      const rect = EL.person.getBoundingClientRect();
-      const localX = clientX - rect.left;
-      const localY = clientY - rect.top;
+  // ✅ 죄인(흔들리는 대상) 안에 화상자국을 붙여야 같이 흔들립니다
+  if (!EL.sinner) return;
 
-      const mark = document.createElement('div');
-      mark.className = 'burn-mark';
-      mark.style.left = (localX - 20) + 'px';
-      mark.style.top  = (localY - 20) + 'px';
+  const rect = EL.sinner.getBoundingClientRect();
+  const localX = clientX - rect.left;
+  const localY = clientY - rect.top;
 
-      EL.person.appendChild(mark);
-      setTimeout(() => mark.remove(), 8000);
-    };
+  const mark = document.createElement('div');
+  mark.className = 'burn-mark';
+  mark.style.left = (localX - 20) + 'px';
+  mark.style.top  = (localY - 20) + 'px';
 
-    return { smoke, burnMark };
-  })();
+  EL.sinner.appendChild(mark);
+  setTimeout(() => mark.remove(), 8000);
+};
+
+const burnMarkLocal = (localX, localY) => {
+  if (!EL.sinner) return;
+
+  const mark = document.createElement('div');
+  mark.className = 'burn-mark';
+  mark.style.left = (localX - 20) + 'px';
+  mark.style.top  = (localY - 20) + 'px';
+
+  EL.sinner.appendChild(mark);
+  setTimeout(() => mark.remove(), 8000);
+};
+
+    return { smoke, burnMark, burnMarkLocal };
+})();
 
   // ----------------------------
   // App wiring
@@ -968,6 +982,9 @@ const spawnEmber = (clientX, clientY) => {
         pageY: e.clientY + window.scrollY,
       };
 
+      const r = EL.sinner.getBoundingClientRect();const markX = p.clientX - r.left;
+      const markY = p.clientY - r.top;
+
       Bubble.show("으아아악!!!", 600);
 
       try {
@@ -985,7 +1002,7 @@ Bubble.show('으아아악!!!', 700);
       Heat.coolDown();
 
       burnTimer = setTimeout(() => {
-        Effects.burnMark(p.clientX, p.clientY);
+        Effects.burnMarkLocal(markX, markY);
         burnTimer = null;
       }, 280);
 
