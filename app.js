@@ -1350,15 +1350,28 @@ function extractTopicBefore(base, keywordRe){
 
 // “A는 B야?” 류(예/아니오) — 외부지식 없이 '단정 어려움'까지 포함
 function parseYesNo(base){
-  // 6W 단어 섞이면 예/아니오로 보지 않음
-  if (/(어디|언제|누구|누가|왜|어떻게|어케|무엇|뭐)/u.test(base)) return null;
-  const m = base.match(/^(.+?)(?:은|는|이|가)?\s*(.+?)\s*(이야|야|인가|인가요|입니까|맞아|맞나요|맞냐|맞니|냐|니)\s*$/u);
+  // ✅ 6W + 수량(몇/얼마) 섞이면 예/아니오로 보지 않음
+  // (특히 "몇명이야" 같은 건 Yes/No로 판단하면 안 됨)
+  if (/(어디|언제|누구|누가|왜|어떻게|어케|어떡|무엇|뭐|몇|얼마)/u.test(base)) return null;
+
+  // ✅ 주어/서술어 경계(공백)가 있는 문장만 예/아니오로 판단
+  // 공백이 없으면 내부 글자(예: 차'은'우)까지 조사로 오인할 가능성이 커짐
+  if (!/\s/.test(base)) return null;
+
+  // ✅ '은/는/이/가'는 "조사"일 때만: 뒤에 공백이 있을 때만 허용
+  // → 이름 내부의 '은'(차은우, 김은민식)을 조사로 오인하는 현상 차단
+  const m = base.match(
+    /^(.+?)(?:(은|는|이|가)(?=\s))?\s+(.+?)\s*(이야|야|인가|인가요|입니까|맞아|맞나요|맞냐|맞니|냐|니)\s*$/u
+  );
   if (!m) return null;
+
   const subject = String(m[1] || '').trim();
-  const pred    = String(m[2] || '').trim();
+  const pred    = String(m[3] || '').trim();
   if (!subject || !pred) return null;
+
   return { subject, pred };
 }
+
 
 function answerBy6W(raw){
   const base = stripEndPunct(normalizeQ(raw));
@@ -1368,6 +1381,13 @@ function answerBy6W(raw){
   if (/(몇 ?시|시간 알려|time now|지금 시간)/i.test(base)) return null;
   if (/(오늘 날짜|며칠|몇월|몇 일|date today|오늘 몇일)/i.test(base)) return null;
   if (/(요일|무슨 요일|day of week)/i.test(base)) return null;
+
+    // ✅ (추가) 몇/얼마(수량) 질문 — 안전하게 "모름" 처리
+  if (/(몇\s*(명|개|번|살|년|월|일)|몇명|몇개|몇번|얼마)/u.test(base)){
+    const t = extractTopicBefore(base, /(몇\s*(?:명|개|번|살|년|월|일)|얼마)/u);
+    if (t) return `소인 아뢰오되, ${t}${josa(t,'이','가')} 몇인지는 모르옵니다요.`;
+    return `소인 아뢰오되, 그 수는 소인이 알지 못하옵니다요.`;
+  }
 
   // 0) 예/아니오
   const yn = parseYesNo(base);
